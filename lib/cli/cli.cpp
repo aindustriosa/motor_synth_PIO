@@ -8,21 +8,26 @@ void CLI::setup()
   blink.setup();
   print("Setup: motor on pin", MOTOR_CONTROL_PIN);
   motor.setup(MOTOR_CONTROL_PIN);
+  midiInterface.setup();
   print("Setup: end");
 }
 
 void CLI::loop()
 {
+  print("##############################################");
   print("Motor Synth: Menu");
   print("1: Change motor speed using this serial port");
   print("2: Sweep motor speed");
+  print("3: MIDI in to serial port");
   waitBlinking();
 
   int value = getSerialPositiveValue();
   if (value == 1)
-    loop_serial();
+    menuCommandChangeMotorOnUserSerialInput();
   if (value == 2)
-    sweepMotor();
+    menuCommandSweepMotor();
+  if (value == 3)
+    menuCommandMidiInterfaceTest();
 
   if (value < 0)
     waitBlinking();
@@ -57,7 +62,7 @@ void CLI::print(const char *text, int number)
   Serial.println(number);
 }
 
-void CLI::loop_serial()
+void CLI::menuCommandChangeMotorOnUserSerialInput()
 {
   print("Changing motor speed using this serial port:\nEnter a number to change the speed");
   print("Values from 0 to ", motor.getMaxSpeed());
@@ -87,7 +92,7 @@ void CLI::loop_serial()
   }
 }
 
-void CLI::sweepMotor()
+void CLI::menuCommandSweepMotor()
 {
   print("Sweeping motor speed:");
   print("Please enter a value for the wait millisecs between speed changes (default is 100)");
@@ -133,5 +138,24 @@ void CLI::sweepSpeedDownwards(int delay_between_changes_millis)
     print("Speed:", value);
     blink.toggle();
     delay(delay_between_changes_millis);
+  }
+}
+
+void CLI::menuCommandMidiInterfaceTest()
+{
+  SynthEvent event = SynthEvent();
+
+  print("Printing out incoming MIDI events (LED toggles on new event).");
+  print("Please, read the docs to get some ideas on how to send MIDI to the device.");
+  print("Reset the board to go back to the menu");
+
+  while (true)
+  {
+    int res = midiInterface.getSynthEvent(&event);
+    if (res >= 0)
+    {
+      event.print();
+      blink.toggle();
+    }
   }
 }
