@@ -3,12 +3,9 @@
 
 void CLI::setup()
 {
-  Serial.begin(112500);
+  Serial.begin(115200);
   print("Setup: blink");
   blink.setup();
-  print("Setup: motor on pin", MOTOR_CONTROL_PIN);
-  motor.setup(MOTOR_CONTROL_PIN);
-  midiInterface.setup();
   print("Setup: end");
 }
 
@@ -19,15 +16,18 @@ void CLI::loop()
   print("1: Change motor speed using this serial port");
   print("2: Sweep motor speed");
   print("3: MIDI in to serial port");
+  print("4: Monophonic synth");
   waitBlinking();
 
   int value = getSerialPositiveValue();
   if (value == 1)
-    menuCommandChangeMotorOnUserSerialInput();
+    menuCommandChangeMotorOnUserSerialInput(MOTOR_CONTROL_PIN);
   if (value == 2)
-    menuCommandSweepMotor();
+    menuCommandSweepMotor(MOTOR_CONTROL_PIN);
   if (value == 3)
     menuCommandMidiInterfaceTest();
+  if (value == 4)
+    menuCommandMonophonicSynth(MOTOR_CONTROL_PIN);
 
   if (value < 0)
     waitBlinking();
@@ -62,16 +62,19 @@ void CLI::print(const char *text, int number)
   Serial.println(number);
 }
 
-void CLI::menuCommandChangeMotorOnUserSerialInput()
+void CLI::menuCommandChangeMotorOnUserSerialInput(int motor_control_pin)
 {
+  MotorController motor;
+  print("Setup: motor on pin", motor_control_pin);
+  motor.setup(motor_control_pin);
+
   print("Changing motor speed using this serial port:\nEnter a number to change the speed");
   print("Values from 0 to ", motor.getMaxSpeed());
-  print("Enter three consecutive 0s to exit");
+  print("Reset the board to go back to the main menu.");
+
   waitBlinking();
 
-  int zeros_to_exit = 3;
-
-  while (zeros_to_exit > 0)
+  while (1)
   {
     int value = -1;
     while (value < 0)
@@ -84,18 +87,19 @@ void CLI::menuCommandChangeMotorOnUserSerialInput()
     motor.setSpeed(value);
     print("Speed:", value);
     blink.toggle();
-
-    if (value == 0)
-    {
-      zeros_to_exit = zeros_to_exit - 1;
-    }
   }
 }
 
-void CLI::menuCommandSweepMotor()
+void CLI::menuCommandSweepMotor(int motor_control_pin)
 {
+  MotorController motor;
+  print("Setup: motor on pin ", motor_control_pin);
+  motor.setup(motor_control_pin);
+
   print("Sweeping motor speed:");
   print("Please enter a value for the wait millisecs between speed changes (default is 100)");
+  print("Reset the board to go back to the main menu.");
+
   waitBlinking();
 
   int delay_between_changes_millis = 100;
@@ -112,29 +116,31 @@ void CLI::menuCommandSweepMotor()
     delay_between_changes_millis = value;
   }
 
-  sweepSpeedUpwards(delay_between_changes_millis);
-  sweepSpeedDownwards(delay_between_changes_millis);
-  motor.setSpeed(0);
+  while (1)
+  {
+    sweepSpeedUpwards(delay_between_changes_millis, &motor);
+    sweepSpeedDownwards(delay_between_changes_millis, &motor);
+  }
 }
 
-void CLI::sweepSpeedUpwards(int delay_between_changes_millis)
+void CLI::sweepSpeedUpwards(int delay_between_changes_millis, MotorController *motor)
 {
-  int maxSpeed = motor.getMaxSpeed();
+  int maxSpeed = motor->getMaxSpeed();
   for (int value = 0; value <= maxSpeed; value++)
   {
-    motor.setSpeed(value);
+    motor->setSpeed(value);
     print("Speed:", value);
     blink.toggle();
     delay(delay_between_changes_millis);
   }
 }
 
-void CLI::sweepSpeedDownwards(int delay_between_changes_millis)
+void CLI::sweepSpeedDownwards(int delay_between_changes_millis, MotorController *motor)
 {
-  int maxSpeed = motor.getMaxSpeed();
+  int maxSpeed = motor->getMaxSpeed();
   for (int value = maxSpeed; value >= 0; value--)
   {
-    motor.setSpeed(value);
+    motor->setSpeed(value);
     print("Speed:", value);
     blink.toggle();
     delay(delay_between_changes_millis);
@@ -144,6 +150,8 @@ void CLI::sweepSpeedDownwards(int delay_between_changes_millis)
 void CLI::menuCommandMidiInterfaceTest()
 {
   SynthEvent event = SynthEvent();
+  MidiInterface midiInterface;
+  midiInterface.setup();
 
   print("Printing out incoming MIDI events (LED toggles on new event).");
   print("Please, read the docs to get some ideas on how to send MIDI to the device.");
@@ -154,6 +162,32 @@ void CLI::menuCommandMidiInterfaceTest()
     int res = midiInterface.getSynthEvent(&event);
     if (res >= 0)
     {
+      event.print();
+      blink.toggle();
+    }
+  }
+}
+
+void CLI::menuCommandMonophonicSynth(int motor_control_pin)
+{
+  SynthEvent event = SynthEvent();
+  MidiInterface midiInterface;
+  midiInterface.setup();
+  MotorSynth motorSynth;
+  motorSynth.setup(motor_control_pin);
+
+  print("Monophonic Synthesizer (LED toggles on new event).");
+  print("Please, read the docs to get some ideas on how to send MIDI to the device.");
+  print("Reset the board to go back to the menu");
+
+  motorSynth.printTunning();
+
+  while (true)
+  {
+    int res = midiInterface.getSynthEvent(&event);
+    if (res >= 0)
+    {
+      motorSynth.processEvent(&event);
       event.print();
       blink.toggle();
     }

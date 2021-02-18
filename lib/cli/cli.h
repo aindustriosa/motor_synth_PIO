@@ -10,6 +10,7 @@
 #include "../motor_controller/motor_controller.h"
 #include "../midi_interface/midi_interface.h"
 #include "../data_model/synth_event/synth_event.h"
+#include "../motor_synth/motor_synth.h"
 
 class CLI
 {
@@ -29,14 +30,13 @@ public:
 
 private:
     Blink blink;           // Board LED management
-    MotorController motor; // One motor controller
     const int MOTOR_CONTROL_PIN = 9;
-    MidiInterface midiInterface;
 
     // Main menu commands 
-    void menuCommandChangeMotorOnUserSerialInput();
-    void menuCommandSweepMotor();
+    void menuCommandChangeMotorOnUserSerialInput(int motor_control_pin);
+    void menuCommandSweepMotor(int motor_control_pin);
     void menuCommandMidiInterfaceTest();
+    void menuCommandMonophonicSynth(int motor_control_pin);
 
     // Some helpers
     /**
@@ -58,13 +58,13 @@ private:
      * 
      * param delay_between_changes_millis: time between a speed change in milliseconds.
      */
-    void sweepSpeedUpwards(int delay_between_changes_millis);
+    void sweepSpeedUpwards(int delay_between_changes_millis, MotorController * motor);
     /**
      * Sweeps down the motor speed. Used by menuCommandSweepMotor()
      * 
      * param delay_between_changes_millis: time between a speed change in milliseconds.
      */
-    void sweepSpeedDownwards(int delay_between_changes_millis);
+    void sweepSpeedDownwards(int delay_between_changes_millis, MotorController * motor);
     /**
      * Makes the CLI wait by blinking the internal LED.
      */

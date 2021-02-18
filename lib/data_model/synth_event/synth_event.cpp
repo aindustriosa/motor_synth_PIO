@@ -83,7 +83,7 @@ void SynthEvent::print()
         break;
 
     case SynthEventType::Clock:
-        Serial.println("Clock");
+        //Serial.println("Clock");
         break;
 
     case SynthEventType::Start:
