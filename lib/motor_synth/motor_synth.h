@@ -18,6 +18,26 @@ public:
 
 private:
     MotorController motor;
+#define EVENTS_STACK_SIZE 10
+    // Notes pressed and not released yet.
+    SynthEvent eventsStack[EVENTS_STACK_SIZE];
+    void printStack();
+    // The Synth only plays the note in this index. If -1 there are no notes in the stack.
+    int eventsStackIndex = -1;
+
+    /**
+     * Liberates the last slot in eventsStack, removing the older event and moving
+     * the rest of events.
+     * 
+     * Updates eventsStackIndex, that points to the more recent note in the stack. 
+     */
+    void removeOldestEventInStack();
+    /**
+     * Liberates event from eventsStack, moving the rest of events.
+     * 
+     * Updates eventsStackIndex, that points to the more recent note in the stack. 
+     */
+    void removeNoteOnEventInStack(SynthEvent * event);
 
     void update_note_to_velocity();
 
