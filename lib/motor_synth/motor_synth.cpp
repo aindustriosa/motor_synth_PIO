@@ -145,11 +145,7 @@ void MotorSynth::processEvent(SynthEvent *event)
         }
 
         this->eventsStackIndex = this->eventsStackIndex + 1;
-        this->eventsStack[this->eventsStackIndex].setChannel(event->getChannel());
-        this->eventsStack[this->eventsStackIndex].setData1(event->getData1());
-        this->eventsStack[this->eventsStackIndex].setData2(event->getData2());
-        this->eventsStack[this->eventsStackIndex].setType(event->getType());
-
+        event->copyInto(&(this->eventsStack[this->eventsStackIndex]));
         printStack();
         break;
 
@@ -185,10 +181,7 @@ void MotorSynth::removeOldestEventInStack()
     const int currentIndex = this->eventsStackIndex;
     for (int i = 0; i < currentIndex; i++)
     {
-        this->eventsStack[i].setChannel(this->eventsStack[i + 1].getChannel());
-        this->eventsStack[i].setData1(this->eventsStack[i + 1].getData1());
-        this->eventsStack[i].setData2(this->eventsStack[i + 1].getData2());
-        this->eventsStack[i].setType(this->eventsStack[i + 1].getType());
+        this->eventsStack[i + 1].copyInto(&(this->eventsStack[i]));
     }
 
     this->eventsStackIndex = this->eventsStackIndex - 1;
@@ -231,10 +224,7 @@ void MotorSynth::removeNoteOnEventInStack(SynthEvent *event)
     // Remove event at remove_index
     for (int i = remove_index; i < currentIndex; i++)
     {
-        this->eventsStack[i].setChannel(this->eventsStack[i + 1].getChannel());
-        this->eventsStack[i].setData1(this->eventsStack[i + 1].getData1());
-        this->eventsStack[i].setData2(this->eventsStack[i + 1].getData2());
-        this->eventsStack[i].setType(this->eventsStack[i + 1].getType());
+        this->eventsStack[i + 1].copyInto(&(this->eventsStack[i]));
     }
 
     this->eventsStackIndex = this->eventsStackIndex - 1;

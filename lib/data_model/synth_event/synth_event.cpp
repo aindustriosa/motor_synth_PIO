@@ -111,6 +111,14 @@ void SynthEvent::print()
     }
 }
 
+void SynthEvent::copyInto(SynthEvent *event)
+{
+    event->type = this->type;
+    event->channel = this->channel;
+    event->data1 = this->data1;
+    event->data2 = this->data2;
+}
+
 void SynthEvent::setType(SynthEventType type)
 {
     this->type = type;
