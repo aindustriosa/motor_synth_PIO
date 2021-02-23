@@ -37,6 +37,7 @@ private:
     void menuCommandSweepMotor(int motor_control_pin);
     void menuCommandMidiInterfaceTest();
     void menuCommandMonophonicSynth(int motor_control_pin);
+    void menuCommandMonophonicSynthTunning(int motor_control_pin);
 
     // Some helpers
     /**

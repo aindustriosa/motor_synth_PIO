@@ -7,10 +7,35 @@ void MotorSynth::update_note_to_velocity()
     int max_speed = this->motor.getMaxSpeed();
     for (int i = 0; i < NOTE_TO_VELOCITY_SIZE; i++)
     {
-        note_to_velocity[i] = map(i,
-                                  0, NOTE_TO_VELOCITY_SIZE,
-                                  0, max_speed);
+        noteToVelocity[i] = map(i,
+                                0, NOTE_TO_VELOCITY_SIZE,
+                                0, max_speed);
     }
+}
+
+void MotorSynth::printNoteToVelocity()
+{
+    Serial.println("int noteToVelocity[NOTE_TO_VELOCITY_SIZE] = {");
+    for (int i = 0; i < NOTE_TO_VELOCITY_SIZE; i++)
+    {
+        if (i % 10 == 0)
+        {
+            Serial.print("    ");
+        }
+        Serial.print(noteToVelocity[i], DEC);
+        if (i < NOTE_TO_VELOCITY_SIZE - 1)
+        {
+            if (i % 10 == 9)
+            {
+                Serial.println(",");
+            }
+            else
+            {
+                Serial.print(", ");
+            }
+        }
+    }
+    Serial.println("    };");
 }
 
 void numberToNote(int value, char *note, int len_note)
@@ -115,9 +140,11 @@ void MotorSynth::printTunning()
     for (int i = 0; i < NOTE_TO_VELOCITY_SIZE; i++)
     {
         numberToNote(i, note, len_note);
+        Serial.print(i, DEC);
+        Serial.print(" - ");
         Serial.print(note);
         Serial.print(": ");
-        Serial.print(note_to_velocity[i], DEC);
+        Serial.print(noteToVelocity[i], DEC);
         Serial.println();
     }
 }
@@ -125,7 +152,23 @@ void MotorSynth::printTunning()
 void MotorSynth::setup(int motor_control_pin)
 {
     this->motor.setup(motor_control_pin);
-    update_note_to_velocity();
+    this->events_stack_size = EVENTS_STACK_MAX_SIZE;
+    // update_note_to_velocity();
+    Serial.println("MotorSynth setup completed");
+}
+
+void MotorSynth::setup(int motor_control_pin, int events_stack_size)
+{
+    this->motor.setup(motor_control_pin);
+    if ((events_stack_size >= EVENTS_STACK_MAX_SIZE) || (events_stack_size < 1))
+    {
+        this->events_stack_size = EVENTS_STACK_MAX_SIZE;
+    }
+    else
+    {
+        this->events_stack_size = events_stack_size;
+    }
+    //update_note_to_velocity();
     Serial.println("MotorSynth setup completed");
 }
 
@@ -136,9 +179,9 @@ void MotorSynth::processEvent(SynthEvent *event)
     {
     case SynthEventType::NoteOn:
         // First of all, we play the note
-        this->motor.setSpeed(note_to_velocity[event->getNote()]);
+        this->motor.setSpeed(noteToVelocity[event->getNote()]);
         // Now, we add the note to the stack
-        if (this->eventsStackIndex >= EVENTS_STACK_SIZE - 1)
+        if (this->eventsStackIndex >= this->events_stack_size - 1)
         {
             // We need to make room for the new event
             removeOldestEventInStack();
@@ -161,7 +204,7 @@ void MotorSynth::processEvent(SynthEvent *event)
         }
         else
         {
-            this->motor.setSpeed(note_to_velocity[this->eventsStack[this->eventsStackIndex].getNote()]);
+            this->motor.setSpeed(noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
         }
         printStack();
         break;
@@ -173,9 +216,9 @@ void MotorSynth::processEvent(SynthEvent *event)
 
 void MotorSynth::removeOldestEventInStack()
 {
-    if (this->eventsStackIndex >= EVENTS_STACK_SIZE)
+    if (this->eventsStackIndex >= this->events_stack_size)
     {
-        this->eventsStackIndex = EVENTS_STACK_SIZE - 1;
+        this->eventsStackIndex = this->events_stack_size - 1;
     }
 
     const int currentIndex = this->eventsStackIndex;
@@ -232,9 +275,9 @@ void MotorSynth::removeNoteOnEventInStack(SynthEvent *event)
 
 void MotorSynth::printStack()
 {
-    if (this->eventsStackIndex >= EVENTS_STACK_SIZE)
+    if (this->eventsStackIndex >= this->events_stack_size)
     {
-        this->eventsStackIndex = EVENTS_STACK_SIZE - 1;
+        this->eventsStackIndex = this->events_stack_size - 1;
     }
 
     const int currentIndex = this->eventsStackIndex;
@@ -247,4 +290,22 @@ void MotorSynth::printStack()
         this->eventsStack[i].print();
     }
     Serial.println("--------------------");
+}
+
+void MotorSynth::tune_note(int note, int velocity)
+{
+    if (note >= NOTE_TO_VELOCITY_SIZE)
+    {
+        return;
+    }
+    noteToVelocity[note] = velocity;
+}
+
+int MotorSynth::getNoteVelocity(int note)
+{
+    if (note >= NOTE_TO_VELOCITY_SIZE)
+    {
+        return -1;
+    }
+    return noteToVelocity[note];
 }
