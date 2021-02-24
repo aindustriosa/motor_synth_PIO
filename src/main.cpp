@@ -10,5 +10,7 @@ void setup()
 
 void loop()
 {
-  cli.loop();
+  // Uncomment the user interface that you preffer
+  cli.loop_midi();
+  //cli.loop_serial();
 }

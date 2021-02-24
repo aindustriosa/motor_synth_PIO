@@ -22,17 +22,30 @@ public:
      */
     void setup();
     /**
-     * CLI loop.
+     * CLI loop serial version.
      * 
      * Presents the main menu and launches the user selection.
-     */  
-    void loop();
+     * User selects by using the serial port.
+     */
+    void loop_serial();
+    /**
+     * CLI loop MIDI.
+     * 
+     * Presents the main menu and launches the user selection.
+     * User selects by using MIDI control to switch menu entry and NoteOff for selection.
+     */
+    void loop_midi();
 
 private:
-    Blink blink;           // Board LED management
+    Blink blink; // Board LED management
+    
     const int MOTOR_CONTROL_PIN = 9;
 
-    // Main menu commands 
+    const int MENU_ITEMS_LEN = 5;
+
+    MidiInterface midiInterface;
+
+    // Main menu commands
     void menuCommandChangeMotorOnUserSerialInput(int motor_control_pin);
     void menuCommandSweepMotor(int motor_control_pin);
     void menuCommandMidiInterfaceTest();
@@ -41,6 +54,10 @@ private:
 
     // Some helpers
     /**
+     * Prints on serial port the main menu highlighting the selected item.
+     */
+    void printMenu(int menu_item_selected);
+    /**
      * Waits for the user to enter a positive number. Returns it.
      * Returns a negative value on failure.
      */
@@ -48,24 +65,28 @@ private:
     /**
      * Prints on serial port the given text.
      */
-    void print(const char* text);
+    void print(const char *text);
+    /**
+     * Prints on serial port the given text.
+     */
+    void println(const char *text);
     /**
      * Prints on serial port the given text and the number.
      */
-    void print(const char* text, int number);
+    void println(const char *text, int number);
 
     /**
      * Sweeps up the motor speed. Used by menuCommandSweepMotor()
      * 
      * param delay_between_changes_millis: time between a speed change in milliseconds.
      */
-    void sweepSpeedUpwards(int delay_between_changes_millis, MotorController * motor);
+    void sweepSpeedUpwards(int delay_between_changes_millis, MotorController *motor);
     /**
      * Sweeps down the motor speed. Used by menuCommandSweepMotor()
      * 
      * param delay_between_changes_millis: time between a speed change in milliseconds.
      */
-    void sweepSpeedDownwards(int delay_between_changes_millis, MotorController * motor);
+    void sweepSpeedDownwards(int delay_between_changes_millis, MotorController *motor);
     /**
      * Makes the CLI wait by blinking the internal LED.
      */

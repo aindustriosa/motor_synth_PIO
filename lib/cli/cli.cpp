@@ -4,21 +4,15 @@
 void CLI::setup()
 {
   Serial.begin(115200);
-  print("Setup: blink");
-  blink.setup();
-  print("Setup: end");
+  println("Setup: blink");
+  this->blink.setup();
+  this->midiInterface.setup();
+  println("Setup: end");
 }
 
-void CLI::loop()
+void CLI::loop_serial()
 {
-  print("##############################################");
-  print("Motor Synth: Menu");
-  print("1: Change motor speed using this serial port");
-  print("2: Sweep motor speed");
-  print("3: MIDI in to serial port");
-  print("4: Monophonic synth");
-  print("5: Monophonic synth tunning");
-  waitBlinking();
+  printMenu(-1);
 
   int value = getSerialPositiveValue();
   if (value == 1)
@@ -34,6 +28,62 @@ void CLI::loop()
 
   if (value < 0)
     waitBlinking();
+}
+
+void CLI::printMenu(int menu_item_selected)
+{
+  println("##############################################");
+  println("Motor Synth: Menu");
+  if (menu_item_selected == 0)
+    print("SELECTED - ");
+  println("1: Change motor speed using this serial port");
+  if (menu_item_selected == 1)
+    print("SELECTED - ");
+  println("2: Sweep motor speed");
+  if (menu_item_selected == 2)
+    print("SELECTED - ");
+  println("3: MIDI in to serial port");
+  if (menu_item_selected == 3)
+    print("SELECTED - ");
+  println("4: Monophonic synth");
+  if (menu_item_selected == 4)
+    print("SELECTED - ");
+  println("5: Monophonic synth tunning");
+}
+
+void CLI::loop_midi()
+{
+  int menu_item_selected = 0; // Used for loop_midi to keep the current menu selected
+  SynthEvent event = SynthEvent();
+
+  while (true)
+  {
+    int res = this->midiInterface.getSynthEvent(&event);
+    if (res >= 0)
+    {
+      this->blink.toggle();
+      event.print();
+      if (event.getType() == SynthEventType::NoteOff)
+      {
+        if (menu_item_selected == 0)
+          menuCommandChangeMotorOnUserSerialInput(MOTOR_CONTROL_PIN);
+        if (menu_item_selected == 1)
+          menuCommandSweepMotor(MOTOR_CONTROL_PIN);
+        if (menu_item_selected == 2)
+          menuCommandMidiInterfaceTest();
+        if (menu_item_selected == 3)
+          menuCommandMonophonicSynth(MOTOR_CONTROL_PIN);
+        if (menu_item_selected == 4)
+          menuCommandMonophonicSynthTunning(MOTOR_CONTROL_PIN);
+      }
+
+      if (event.getType() == SynthEventType::ControlChange)
+      {
+        menu_item_selected = (menu_item_selected + 1) % this->MENU_ITEMS_LEN;
+        printMenu(menu_item_selected);
+      }
+    }
+  }
 }
 
 void CLI::waitBlinking()
@@ -54,12 +104,17 @@ int CLI::getSerialPositiveValue()
   return res;
 }
 
-void CLI::print(const char *text)
+void CLI::println(const char *text)
 {
   Serial.println(text);
 }
 
-void CLI::print(const char *text, int number)
+void CLI::print(const char *text)
+{
+  Serial.print(text);
+}
+
+void CLI::println(const char *text, int number)
 {
   Serial.print(text);
   Serial.println(number);
@@ -68,14 +123,12 @@ void CLI::print(const char *text, int number)
 void CLI::menuCommandChangeMotorOnUserSerialInput(int motor_control_pin)
 {
   MotorController motor;
-  print("Setup: motor on pin", motor_control_pin);
+  println("Setup: motor on pin", motor_control_pin);
   motor.setup(motor_control_pin);
 
-  print("Changing motor speed using this serial port:\nEnter a number to change the speed");
-  print("Values from 0 to ", motor.getMaxSpeed());
-  print("Reset the board to go back to the main menu.");
-
-  waitBlinking();
+  println("Changing motor speed using this serial port:\nEnter a number to change the speed");
+  println("Values from 0 to ", motor.getMaxSpeed());
+  println("Reset the board to go back to the main menu.");
 
   while (1)
   {
@@ -83,12 +136,10 @@ void CLI::menuCommandChangeMotorOnUserSerialInput(int motor_control_pin)
     while (value < 0)
     {
       value = getSerialPositiveValue();
-      if (value < 0)
-        waitBlinking();
     }
 
     motor.setSpeed(value);
-    print("Speed:", value);
+    println("Speed:", value);
     blink.toggle();
   }
 }
@@ -96,14 +147,12 @@ void CLI::menuCommandChangeMotorOnUserSerialInput(int motor_control_pin)
 void CLI::menuCommandSweepMotor(int motor_control_pin)
 {
   MotorController motor;
-  print("Setup: motor on pin ", motor_control_pin);
+  println("Setup: motor on pin ", motor_control_pin);
   motor.setup(motor_control_pin);
 
-  print("Sweeping motor speed:");
-  print("Please enter a value for the wait millisecs between speed changes (default is 100)");
-  print("Reset the board to go back to the main menu.");
-
-  waitBlinking();
+  println("Sweeping motor speed:");
+  println("Please enter a value for the wait millisecs between speed changes (default is 100)");
+  println("Reset the board to go back to the main menu.");
 
   int delay_between_changes_millis = 100;
   int value = -1;
@@ -132,7 +181,7 @@ void CLI::sweepSpeedUpwards(int delay_between_changes_millis, MotorController *m
   for (int value = 0; value <= maxSpeed; value++)
   {
     motor->setSpeed(value);
-    print("Speed:", value);
+    println("Speed:", value);
     blink.toggle();
     delay(delay_between_changes_millis);
   }
@@ -144,7 +193,7 @@ void CLI::sweepSpeedDownwards(int delay_between_changes_millis, MotorController 
   for (int value = maxSpeed; value >= 0; value--)
   {
     motor->setSpeed(value);
-    print("Speed:", value);
+    println("Speed:", value);
     blink.toggle();
     delay(delay_between_changes_millis);
   }
@@ -152,17 +201,15 @@ void CLI::sweepSpeedDownwards(int delay_between_changes_millis, MotorController 
 
 void CLI::menuCommandMidiInterfaceTest()
 {
-  SynthEvent event = SynthEvent();
-  MidiInterface midiInterface;
-  midiInterface.setup();
+  println("Printing out incoming MIDI events (LED toggles on new event).");
+  println("Please, read the docs to get some ideas on how to send MIDI to the device.");
+  println("Reset the board to go back to the menu");
 
-  print("Printing out incoming MIDI events (LED toggles on new event).");
-  print("Please, read the docs to get some ideas on how to send MIDI to the device.");
-  print("Reset the board to go back to the menu");
+  SynthEvent event = SynthEvent();
 
   while (true)
   {
-    int res = midiInterface.getSynthEvent(&event);
+    int res = this->midiInterface.getSynthEvent(&event);
     if (res >= 0)
     {
       event.print();
@@ -174,20 +221,18 @@ void CLI::menuCommandMidiInterfaceTest()
 void CLI::menuCommandMonophonicSynth(int motor_control_pin)
 {
   SynthEvent event = SynthEvent();
-  MidiInterface midiInterface;
-  midiInterface.setup();
   MotorSynth motorSynth;
   motorSynth.setup(motor_control_pin);
 
-  print("Monophonic Synthesizer (LED toggles on new event).");
-  print("Please, read the docs to get some ideas on how to send MIDI to the device.");
-  print("Reset the board to go back to the menu");
+  println("Monophonic Synthesizer (LED toggles on new event).");
+  println("Please, read the docs to get some ideas on how to send MIDI to the device.");
+  println("Reset the board to go back to the menu");
 
   motorSynth.printTunning();
 
   while (true)
   {
-    int res = midiInterface.getSynthEvent(&event);
+    int res = this->midiInterface.getSynthEvent(&event);
     if (res >= 0)
     {
       motorSynth.processEvent(&event);
@@ -199,18 +244,16 @@ void CLI::menuCommandMonophonicSynth(int motor_control_pin)
 
 void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
 {
-  print("Monophonic Synthesizer tuner (LED toggles on new event).");
-  print("Press the MIDI note that you want to tune.");
-  print("Use a MIDI control (fader, potentiometer) to perform the tunning.");
-  print("The tunning change is relative to the control change, if you want to tune down a note");
-  print("turn all right the potentiometer before pushing the note an then go left.");
-  print("Release the MIDI note to stop the tunning (other notes pressed before this will be discarded).");
-  print("Please, read the docs to get some ideas on how to send MIDI to the device.");
-  print("Reset the board to go back to the menu");
+  println("Monophonic Synthesizer tuner (LED toggles on new event).");
+  println("Press the MIDI note that you want to tune.");
+  println("Use a MIDI control (fader, potentiometer) to perform the tunning.");
+  println("The tunning change is relative to the control change, if you want to tune down a note");
+  println("turn all right the potentiometer before pushing the note an then go left.");
+  println("Release the MIDI note to stop the tunning (other notes pressed before this will be discarded).");
+  println("Please, read the docs to get some ideas on how to send MIDI to the device.");
+  println("Reset the board to go back to the menu");
 
   SynthEvent event = SynthEvent();
-  MidiInterface midiInterface;
-  midiInterface.setup();
   MotorSynth motorSynth;
   // We use here a event stack size of 1 so notes don't get stacked
   motorSynth.setup(motor_control_pin, 1);
@@ -224,7 +267,7 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
 
   while (true)
   {
-    int res = midiInterface.getSynthEvent(&event);
+    int res = this->midiInterface.getSynthEvent(&event);
 
     if (res >= 0)
     {
@@ -256,10 +299,10 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
         }
         if (controlValue > -1)
         {
-          // Not the first control update, update the note tuning with the difference 
+          // Not the first control update, update the note tuning with the difference
           // of control values
           int difference = event.getControlValue() - controlValue;
-          int updatedVelocity = motorSynth.getNoteVelocity(noteBeingTunned.getNote()) + 
+          int updatedVelocity = motorSynth.getNoteVelocity(noteBeingTunned.getNote()) +
                                 difference;
           motorSynth.tune_note(noteBeingTunned.getNote(), updatedVelocity);
           Serial.print("updatedVelocity ");
