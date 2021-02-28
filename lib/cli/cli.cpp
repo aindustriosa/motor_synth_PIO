@@ -255,15 +255,14 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
 
   SynthEvent event = SynthEvent();
   MotorSynth motorSynth;
-  // We use here a event stack size of 1 so notes don't get stacked
-  motorSynth.setup(motor_control_pin, 1);
+  motorSynth.setup(motor_control_pin);
 
   // The note we are going to tune. InvalidType if no note active.
   SynthEvent noteBeingTunned;
   noteBeingTunned.setType(SynthEventType::InvalidType);
+  // temporary storage for an event.
+  SynthEvent currentlyPlayedNote;
   int controlValue = -1;            // Last control value. -1 if no value (note has been released)
-  boolean mustProcessEvent = false; // Wether noteBeingTunned must be sent to the synth to play the note
-  motorSynth.printTunning();
 
   while (true)
   {
@@ -273,23 +272,60 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
     {
       switch (event.getType())
       {
-      case SynthEventType::NoteOn: // Update noteBeingTunned
-        if (noteBeingTunned.getType() != SynthEventType::NoteOn)
+      case SynthEventType::NoteOn:
+        // We send the note to be proccesed by the synth, then we get the
+        // current played note and set it to be tuned
+        motorSynth.processEvent(&event);
+        motorSynth.getCurrentlyPlayedNote(&currentlyPlayedNote);
+
+        // if this is different to noteBeingTunned we  are tunning a different note.
+        // we must reset the tunning configuration
+        if (currentlyPlayedNote.getType() != SynthEventType::NoteOn)
         {
-          event.copyInto(&noteBeingTunned);
-          controlValue = -1;
-          mustProcessEvent = true;
+          break;
         }
+        if (currentlyPlayedNote.getNote() == noteBeingTunned.getNote())
+        {
+          break;
+        }
+
+        event.copyInto(&noteBeingTunned);
+        controlValue = -1;
+        noteBeingTunned.print();
+        blink.toggle();
+        Serial.print("Current velocity: ");
+        Serial.println(motorSynth.getNoteVelocity(noteBeingTunned.getNote()), DEC);
+
         break;
 
       case SynthEventType::NoteOff: // Update noteBeingTunned
-        if (event.getNote() == noteBeingTunned.getNote())
+        // We send the note to be proccesed by the synth, then we get the
+        // current played note and set it to be tuned
+        motorSynth.processEvent(&event);
+        motorSynth.getCurrentlyPlayedNote(&currentlyPlayedNote);
+
+        motorSynth.printNoteToVelocity();
+
+        // if this is different to noteBeingTunned we  are tunning a different note.
+        // we must reset the tunning configuration
+        if (currentlyPlayedNote.getType() != SynthEventType::NoteOn)
         {
-          noteBeingTunned.setType(SynthEventType::NoteOff);
-          controlValue = -1;
-          mustProcessEvent = true;
-          motorSynth.printNoteToVelocity();
+          noteBeingTunned.setType(SynthEventType::InvalidType);
+          noteBeingTunned.setNote(255); // a note that never is going to be set
+          break;
         }
+        if (currentlyPlayedNote.getNote() == noteBeingTunned.getNote())
+        {
+          break;
+        }
+
+        currentlyPlayedNote.copyInto(&noteBeingTunned);
+        controlValue = -1;
+        noteBeingTunned.print();
+        blink.toggle();
+        Serial.print("Current velocity: ");
+        Serial.println(motorSynth.getNoteVelocity(noteBeingTunned.getNote()), DEC);
+
         break;
 
       case SynthEventType::ControlChange:
@@ -299,15 +335,24 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
         }
         if (controlValue > -1)
         {
-          // Not the first control update, update the note tuning with the difference
-          // of control values
-          int difference = event.getControlValue() - controlValue;
+          // Not the first control update, tune up the note if the change in the 
+          // control value is positive and vice versa
+          int difference = 0;
+          if (event.getControlValue() > controlValue)
+          {
+            difference = 1;
+          }
+          if (event.getControlValue() < controlValue)
+          {
+            difference = -1;
+          }
+
           int updatedVelocity = motorSynth.getNoteVelocity(noteBeingTunned.getNote()) +
                                 difference;
           motorSynth.tune_note(noteBeingTunned.getNote(), updatedVelocity);
+          motorSynth.updateSound();
           Serial.print("updatedVelocity ");
           Serial.println(updatedVelocity, DEC);
-          mustProcessEvent = true;
         }
         controlValue = event.getControlValue();
         break;
@@ -315,15 +360,6 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
       default:
         break;
       }
-    }
-
-    if (mustProcessEvent == true)
-    {
-      // Play current note with current tunning
-      motorSynth.processEvent(&noteBeingTunned);
-      noteBeingTunned.print();
-      blink.toggle();
-      mustProcessEvent = false;
     }
   }
 }

@@ -189,7 +189,6 @@ void MotorSynth::processEvent(SynthEvent *event)
 
         this->eventsStackIndex = this->eventsStackIndex + 1;
         event->copyInto(&(this->eventsStack[this->eventsStackIndex]));
-        printStack();
         break;
 
     case SynthEventType::NoteOff:
@@ -206,12 +205,16 @@ void MotorSynth::processEvent(SynthEvent *event)
         {
             this->motor.setSpeed(noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
         }
-        printStack();
         break;
 
     default:
         break;
     }
+}
+
+void MotorSynth::updateSound()
+{
+    this->motor.setSpeed(noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
 }
 
 void MotorSynth::removeOldestEventInStack()
@@ -308,4 +311,20 @@ int MotorSynth::getNoteVelocity(int note)
         return -1;
     }
     return noteToVelocity[note];
+}
+
+
+void MotorSynth::getCurrentlyPlayedNote(SynthEvent *event)
+{
+    if (this->eventsStackIndex >= this->events_stack_size)
+    {
+        this->eventsStackIndex = this->events_stack_size - 1;
+    }
+    if (this->eventsStackIndex < 0)
+    {
+        event->setType(SynthEventType::InvalidType);
+        return;
+    }
+
+    this->eventsStack[this->eventsStackIndex].copyInto(event);
 }
