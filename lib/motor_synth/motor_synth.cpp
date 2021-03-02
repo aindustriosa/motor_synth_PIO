@@ -295,7 +295,7 @@ void MotorSynth::printStack()
     Serial.println("--------------------");
 }
 
-void MotorSynth::tune_note(int note, int velocity)
+void MotorSynth::tune_note(int note, int16_t velocity)
 {
     if (note >= NOTE_TO_VELOCITY_SIZE)
     {
@@ -304,7 +304,7 @@ void MotorSynth::tune_note(int note, int velocity)
     noteToVelocity[note] = velocity;
 }
 
-int MotorSynth::getNoteVelocity(int note)
+int16_t MotorSynth::getNoteVelocity(int note)
 {
     if (note >= NOTE_TO_VELOCITY_SIZE)
     {

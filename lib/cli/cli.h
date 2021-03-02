@@ -41,11 +41,10 @@ private:
     
     const int MOTOR_CONTROL_PIN = 9;
 
-    const int MENU_ITEMS_LEN = 5;
-
     MidiInterface midiInterface;
 
     // Main menu commands
+    const int MENU_ITEMS_LEN = 5;
     void menuCommandChangeMotorOnUserSerialInput(int motor_control_pin);
     void menuCommandSweepMotor(int motor_control_pin);
     void menuCommandMidiInterfaceTest();

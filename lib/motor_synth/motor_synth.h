@@ -29,14 +29,14 @@ public:
     /**
      * Updates the velocity assigned to a note.
      */
-    void tune_note(int note, int velocity);
+    void tune_note(int note, int16_t velocity);
 
     void printNoteToVelocity();
 
     /**
      * Returns -1 if note is not in the noteToVelocity range
      */
-    int getNoteVelocity(int note);
+    int16_t getNoteVelocity(int note);
 
     void printStack();
 
@@ -79,7 +79,7 @@ private:
 
 #define NOTE_TO_VELOCITY_SIZE 128
 
-int noteToVelocity[NOTE_TO_VELOCITY_SIZE] = {
+int16_t noteToVelocity[NOTE_TO_VELOCITY_SIZE] = {
     0, 7, 15, 23, 31, 39, 46, 54, 62, 70,
     78, 85, 93, 101, 109, 117, 125, 132, 140, 148,
     156, 180, 171, 187, 187, 195, 203, 210, 218, 226,
