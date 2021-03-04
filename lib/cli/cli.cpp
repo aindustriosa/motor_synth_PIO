@@ -6,6 +6,7 @@ void CLI::setup()
   Serial.begin(115200);
   println("Setup: blink");
   this->blink.setup();
+  this->synthEEPROM.setup();
   this->midiInterface.setup();
   println("Setup: end");
 }
@@ -62,7 +63,6 @@ void CLI::loop_midi()
     if (res >= 0)
     {
       this->blink.toggle();
-      event.print();
       if (event.getType() == SynthEventType::NoteOff)
       {
         if (menu_item_selected == 0)
@@ -244,25 +244,29 @@ void CLI::menuCommandMonophonicSynth(int motor_control_pin)
 
 void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
 {
-  println("Monophonic Synthesizer tuner (LED toggles on new event).");
+  println("\n\n\n\nMonophonic Synthesizer tuner (LED toggles on new event).");
   println("Press the MIDI note that you want to tune.");
   println("Use a MIDI control (fader, potentiometer) to perform the tunning.");
   println("The tunning change is relative to the control change, if you want to tune down a note");
   println("turn all right the potentiometer before pushing the note an then go left.");
   println("Release the MIDI note to stop the tunning (other notes pressed before this will be discarded).");
   println("Please, read the docs to get some ideas on how to send MIDI to the device.");
-  println("Reset the board to go back to the menu");
+  println("Reset the board to go back to the menu\n\n");
 
-  SynthEvent event = SynthEvent();
   MotorSynth motorSynth;
   motorSynth.setup(motor_control_pin);
 
+  this->synthEEPROM.printSynthMotorData();
+  this->updateEEPROMMotorData(&motorSynth);
+  this->synthEEPROM.printSynthMotorData();
+
+  SynthEvent event = SynthEvent();
   // The note we are going to tune. InvalidType if no note active.
   SynthEvent noteBeingTunned;
   noteBeingTunned.setType(SynthEventType::InvalidType);
   // temporary storage for an event.
   SynthEvent currentlyPlayedNote;
-  int controlValue = -1;            // Last control value. -1 if no value (note has been released)
+  int controlValue = -1; // Last control value. -1 if no value (note has been released)
 
   while (true)
   {
@@ -335,7 +339,7 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
         }
         if (controlValue > -1)
         {
-          // Not the first control update, tune up the note if the change in the 
+          // Not the first control update, tune up the note if the change in the
           // control value is positive and vice versa
           int difference = 0;
           if (event.getControlValue() > controlValue)
@@ -361,5 +365,23 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
         break;
       }
     }
+  }
+}
+
+void CLI::updateEEPROMMotorData(MotorSynth *motorSynth)
+{
+  if (this->synthEEPROM.isSynthMotorDataDirty())
+  {
+    println("EEPROM is dirty. Initializing...");
+    for (int note = 0; note < NOTE_TO_VELOCITY_SIZE; note++)
+    {
+      this->synthEEPROM.setSynthMotorVelocity(note, motorSynth->getNoteVelocity(note));
+    }
+    this->synthEEPROM.cleanSynthMotorDataDirtyByte();
+    println("done.");
+  } 
+  else
+  {
+    print("EEPROM is already initialized");
   }
 }

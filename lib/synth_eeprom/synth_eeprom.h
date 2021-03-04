@@ -1,9 +1,14 @@
-// User Interface
+/** Synth EEPROM: permanent storage for the Synth
+ * 
+ * Currently it maintains the SynthMotor tunning.
+ */
+
 
 #ifndef _MOTOR_SYNTH_EEPROM_H_
 #define _MOTOR_SYNTH_EEPROM_H_
 
 #include <EEPROM.h>
+#include "../motor_synth/motor_synth.h"
 
 class SynthEEPROM
 {
@@ -12,20 +17,29 @@ public:
     void setup();
 
     /**
-     * Checks the SynthMotor stored data status using the magic number.
-     * Copies the data if not initialized.  
+     * returns true if the EEPROM data related to the motor synth is dirty.
      */
-    void synthMotorDataInit();
+    bool isSynthMotorDataDirty();
 
     /**
-     * Updates a single note velocity (writes only if needs to)
+     * .Marks that the EEPROM data related to the motor synth is not dirty.
      */
-    void synthMotorDataUpdateNoteVelocity(int note, int value);
+    void cleanSynthMotorDataDirtyByte();
 
     /**
-     * Get a single note velocity
+     * returns the stored velocity for the given synth motor note
+     * or -1 if the note is out of bounds
      */
-    int synthMotorDataGetNoteVelocity(int note);
+    int16_t getSynthMotorVelocity(int note);
+
+    /**
+     * updates the stored velocity for the given synth motor note.
+     * if the note is out of bounds does nothing.
+     */
+    void setSynthMotorVelocity(int note, int16_t velocity);
+
+    void printSynthMotorData();
+
 
 private:
 
@@ -35,6 +49,7 @@ private:
     const int motorNoteToVelocityIsInitializedAddress = 0;
     // Where the noteToVelocity configuration is placed
     const int motorNoteToVelocityAddress = 1;
+    const int motorNoteToVelocitySize = NOTE_TO_VELOCITY_SIZE;
     
     // If MotorNoteToVelocityIsInitializedAddress contains this number it means that,
     // the data in MotorNoteToVelocityAddress has been initialized

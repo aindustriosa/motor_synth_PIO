@@ -11,6 +11,7 @@
 #include "../midi_interface/midi_interface.h"
 #include "../data_model/synth_event/synth_event.h"
 #include "../motor_synth/motor_synth.h"
+#include "../synth_eeprom/synth_eeprom.h"
 
 class CLI
 {
@@ -38,6 +39,7 @@ public:
 
 private:
     Blink blink; // Board LED management
+    SynthEEPROM synthEEPROM; // permanent storage
     
     const int MOTOR_CONTROL_PIN = 9;
 
@@ -90,6 +92,11 @@ private:
      * Makes the CLI wait by blinking the internal LED.
      */
     void waitBlinking();
+
+    /**
+     * Updates all the EEPROM motor data
+     */
+    void updateEEPROMMotorData(MotorSynth * motorSynth);
 };
 
 #endif
