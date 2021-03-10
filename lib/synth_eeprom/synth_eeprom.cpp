@@ -10,13 +10,25 @@ void SynthEEPROM::setup()
 bool SynthEEPROM::isSynthMotorDataDirty()
 {
     uint8_t value = EEPROM.read(this->motorNoteToVelocityIsInitializedAddress);
-    return value == this->motorNoteToVelocityIsInitializedMagicNumber;
+    return value != this->motorNoteToVelocityIsInitializedMagicNumber;
 }
 
 void SynthEEPROM::cleanSynthMotorDataDirtyByte()
 {
-    EEPROM.update(this->motorNoteToVelocityIsInitializedAddress,
-                  this->motorNoteToVelocityIsInitializedMagicNumber);
+    if (this->isSynthMotorDataDirty())
+    {
+        EEPROM.write(this->motorNoteToVelocityIsInitializedAddress,
+                     this->motorNoteToVelocityIsInitializedMagicNumber);
+    }
+}
+
+void SynthEEPROM::uncleanSynthMotorDataDirtyByte()
+{
+    if (!this->isSynthMotorDataDirty())
+    {
+        EEPROM.write(this->motorNoteToVelocityIsInitializedAddress,
+                     this->motorNoteToVelocityIsInitializedMagicNumber + 1);
+    }
 }
 
 int16_t SynthEEPROM::getSynthMotorVelocity(int note)
@@ -54,8 +66,12 @@ void SynthEEPROM::setSynthMotorVelocity(int note, int16_t velocity)
 void SynthEEPROM::printSynthMotorData()
 {
     Serial.println("EEPROM Motor values:");
-    for (int note = 0; note < this->motorNoteToVelocitySize; note ++)
+    for (int note = 0; note < this->motorNoteToVelocitySize; note++)
     {
+        while (!Serial)
+        {
+            ; // wait for serial port to be availabl. Ugly hack
+        }
         Serial.printf("Note ");
         Serial.print(note, DEC);
         Serial.printf("  velocity ");

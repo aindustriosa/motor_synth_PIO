@@ -27,6 +27,11 @@ public:
     void cleanSynthMotorDataDirtyByte();
 
     /**
+     * .Marks that the EEPROM data related to the motor synth is dirty.
+     */
+    void uncleanSynthMotorDataDirtyByte();
+
+    /**
      * returns the stored velocity for the given synth motor note
      * or -1 if the note is out of bounds
      */
@@ -53,7 +58,7 @@ private:
     
     // If MotorNoteToVelocityIsInitializedAddress contains this number it means that,
     // the data in MotorNoteToVelocityAddress has been initialized
-    const uint8_t motorNoteToVelocityIsInitializedMagicNumber = 56;
+    const uint8_t motorNoteToVelocityIsInitializedMagicNumber = 58;
 };
 
 #endif // _MOTOR_SYNTH_EEPROM_H_

@@ -250,15 +250,13 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
   println("The tunning change is relative to the control change, if you want to tune down a note");
   println("turn all right the potentiometer before pushing the note an then go left.");
   println("Release the MIDI note to stop the tunning (other notes pressed before this will be discarded).");
+  println("Move a control with no notes pressed to update the EEPROM.");
   println("Please, read the docs to get some ideas on how to send MIDI to the device.");
   println("Reset the board to go back to the menu\n\n");
 
   MotorSynth motorSynth;
   motorSynth.setup(motor_control_pin);
-
-  this->synthEEPROM.printSynthMotorData();
   this->updateEEPROMMotorData(&motorSynth);
-  this->synthEEPROM.printSynthMotorData();
 
   SynthEvent event = SynthEvent();
   // The note we are going to tune. InvalidType if no note active.
@@ -335,6 +333,8 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
       case SynthEventType::ControlChange:
         if (noteBeingTunned.getType() != SynthEventType::NoteOn)
         {
+          this->updateEEPROMMotorData(&motorSynth);
+          //this->synthEEPROM.printSynthMotorData();
           break;
         }
         if (controlValue > -1)
@@ -355,6 +355,7 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
                                 difference;
           motorSynth.tune_note(noteBeingTunned.getNote(), updatedVelocity);
           motorSynth.updateSound();
+          this->synthEEPROM.uncleanSynthMotorDataDirtyByte();
           Serial.print("updatedVelocity ");
           Serial.println(updatedVelocity, DEC);
         }
@@ -372,16 +373,21 @@ void CLI::updateEEPROMMotorData(MotorSynth *motorSynth)
 {
   if (this->synthEEPROM.isSynthMotorDataDirty())
   {
-    println("EEPROM is dirty. Initializing...");
+    print("EEPROM is dirty. Initializing...");
     for (int note = 0; note < NOTE_TO_VELOCITY_SIZE; note++)
     {
       this->synthEEPROM.setSynthMotorVelocity(note, motorSynth->getNoteVelocity(note));
     }
     this->synthEEPROM.cleanSynthMotorDataDirtyByte();
     println("done.");
-  } 
+  }
   else
   {
-    print("EEPROM is already initialized");
+    print("EEPROM is already initialized, loading data from EEPROM to motor...");
+    for (int note = 0; note < NOTE_TO_VELOCITY_SIZE; note++)
+    {
+      motorSynth->tune_note(note, this->synthEEPROM.getSynthMotorVelocity(note));
+    }
+    println("done.");
   }
 }
