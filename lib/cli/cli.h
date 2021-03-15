@@ -37,21 +37,22 @@ public:
      */
     void loop_midi();
 
-private:
-    Blink blink; // Board LED management
-    SynthEEPROM synthEEPROM; // permanent storage
-    
-    const int MOTOR_CONTROL_PIN = 9;
-
-    MidiInterface midiInterface;
-
-    // Main menu commands
-    const int MENU_ITEMS_LEN = 5;
     void menuCommandChangeMotorOnUserSerialInput(int motor_control_pin);
     void menuCommandSweepMotor(int motor_control_pin);
     void menuCommandMidiInterfaceTest();
     void menuCommandMonophonicSynth(int motor_control_pin);
     void menuCommandMonophonicSynthTunning(int motor_control_pin);
+
+    const int MOTOR_CONTROL_PIN = 9;
+
+private:
+    Blink blink; // Board LED management
+    SynthEEPROM synthEEPROM; // permanent storage
+
+    MidiInterface midiInterface;
+
+    // Main menu commands
+    const int MENU_ITEMS_LEN = 5;
 
     // Some helpers
     /**
