@@ -43,6 +43,12 @@ public:
      * Prints on serial port a string representation of the event.
      */
     void print();
+    /**
+     * Copyes the contents of this event into the given event.
+     * 
+     * The given event's memory must be already reserved. 
+     */
+    void copyInto(SynthEvent * event);
 
     void setType(SynthEventType type);
     SynthEventType getType();

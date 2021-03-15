@@ -83,7 +83,7 @@ void SynthEvent::print()
         break;
 
     case SynthEventType::Clock:
-        Serial.println("Clock");
+        //Serial.println("Clock");
         break;
 
     case SynthEventType::Start:
@@ -109,6 +109,14 @@ void SynthEvent::print()
     default:
         Serial.println("Unknown MIDI message type");
     }
+}
+
+void SynthEvent::copyInto(SynthEvent *event)
+{
+    event->type = this->type;
+    event->channel = this->channel;
+    event->data1 = this->data1;
+    event->data2 = this->data2;
 }
 
 void SynthEvent::setType(SynthEventType type)
