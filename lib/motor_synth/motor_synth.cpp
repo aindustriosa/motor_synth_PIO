@@ -199,7 +199,7 @@ void MotorSynth::processEvent(SynthEvent *event)
         if (this->eventsStackIndex < 0)
         {
             // No notes in the stack
-            this->motor.setSpeed(0);
+            this->motor.setSpeed(DRONE_VELOCITY);
         }
         else
         {
