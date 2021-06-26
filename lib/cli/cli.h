@@ -20,8 +20,11 @@ public:
      * CLI configuration.
      * 
      * Use in the main setup to setup the CLI.
+     * 
+     * Parameters:
+     *  - blink: pointer to an already configured Blink instance. 
      */
-    void setup();
+    void setup(Blink* blink);
     /**
      * CLI loop serial version.
      * 
@@ -46,7 +49,7 @@ public:
     const int MOTOR_CONTROL_PIN = 9;
 
 private:
-    Blink blink; // Board LED management
+    Blink* blink = nullptr; // Board LED management
     SynthEEPROM synthEEPROM; // permanent storage
 
     MidiInterface midiInterface;

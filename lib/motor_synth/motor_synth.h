@@ -78,7 +78,7 @@ private:
     void update_note_to_velocity();
 
 #define NOTE_TO_VELOCITY_SIZE 128
-#define DRONE_VELOCITY 152
+#define DRONE_VELOCITY 160 // With 160 the motor spins
 
 int16_t noteToVelocity[NOTE_TO_VELOCITY_SIZE] = {
     0, 7, 15, 23, 31, 39, 46, 54, 62, 70,

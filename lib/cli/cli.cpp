@@ -1,14 +1,13 @@
 
 #include "cli.h"
 
-void CLI::setup()
+void CLI::setup(Blink* blink)
 {
   Serial.begin(115200);
-  println("Setup: blink");
-  this->blink.setup();
+  this->blink = blink;
   this->synthEEPROM.setup();
   this->midiInterface.setup();
-  println("Setup: end");
+  println("CLI Setup: end");
 }
 
 void CLI::loop_serial()
@@ -62,7 +61,7 @@ void CLI::loop_midi()
     int res = this->midiInterface.getSynthEvent(&event);
     if (res >= 0)
     {
-      this->blink.toggle();
+      this->blink->toggle();
       if (event.getType() == SynthEventType::NoteOff)
       {
         if (menu_item_selected == 0)
@@ -90,7 +89,7 @@ void CLI::waitBlinking()
 {
   for (int i = 0; i < 20; i++)
   {
-    blink.blink();
+    this->blink->blink();
   }
 }
 
@@ -140,7 +139,7 @@ void CLI::menuCommandChangeMotorOnUserSerialInput(int motor_control_pin)
 
     motor.setSpeed(value);
     println("Speed:", value);
-    blink.toggle();
+    this->blink->toggle();
   }
 }
 
@@ -182,7 +181,7 @@ void CLI::sweepSpeedUpwards(int delay_between_changes_millis, MotorController *m
   {
     motor->setSpeed(value);
     println("Speed:", value);
-    blink.toggle();
+    this->blink->toggle();
     delay(delay_between_changes_millis);
   }
 }
@@ -194,7 +193,7 @@ void CLI::sweepSpeedDownwards(int delay_between_changes_millis, MotorController 
   {
     motor->setSpeed(value);
     println("Speed:", value);
-    blink.toggle();
+    this->blink->toggle();
     delay(delay_between_changes_millis);
   }
 }
@@ -213,7 +212,7 @@ void CLI::menuCommandMidiInterfaceTest()
     if (res >= 0)
     {
       event.print();
-      blink.toggle();
+      this->blink->toggle();
     }
   }
 }
@@ -237,7 +236,7 @@ void CLI::menuCommandMonophonicSynth(int motor_control_pin)
     {
       motorSynth.processEvent(&event);
       event.print();
-      blink.toggle();
+      this->blink->toggle();
     }
   }
 }
@@ -294,7 +293,7 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
         event.copyInto(&noteBeingTunned);
         controlValue = -1;
         noteBeingTunned.print();
-        blink.toggle();
+        this->blink->toggle();
         Serial.print("Current velocity: ");
         Serial.println(motorSynth.getNoteVelocity(noteBeingTunned.getNote()), DEC);
 
@@ -324,7 +323,7 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
         currentlyPlayedNote.copyInto(&noteBeingTunned);
         controlValue = -1;
         noteBeingTunned.print();
-        blink.toggle();
+        this->blink->toggle();
         Serial.print("Current velocity: ");
         Serial.println(motorSynth.getNoteVelocity(noteBeingTunned.getNote()), DEC);
 

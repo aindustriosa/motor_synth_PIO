@@ -2,10 +2,13 @@
 #include "cli.h"
 
 CLI cli;
+Blink blink;
 
 void setup()
 {
-  cli.setup();
+  // println("Setup: blink");
+  blink.setup();
+  cli.setup(&blink);
 }
 
 void loop()
