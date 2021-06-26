@@ -1,11 +1,10 @@
 
 #include "cli.h"
 
-void CLI::setup(Blink* blink)
+void CLI::setup(Blink* blink, SynthEEPROM* synthEEPROM)
 {
-  Serial.begin(115200);
   this->blink = blink;
-  this->synthEEPROM.setup();
+  this->synthEEPROM = synthEEPROM;
   this->midiInterface.setup();
   println("CLI Setup: end");
 }
@@ -354,7 +353,7 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
                                 difference;
           motorSynth.tune_note(noteBeingTunned.getNote(), updatedVelocity);
           motorSynth.updateSound();
-          this->synthEEPROM.uncleanSynthMotorDataDirtyByte();
+          this->synthEEPROM->uncleanSynthMotorDataDirtyByte();
           Serial.print("updatedVelocity ");
           Serial.println(updatedVelocity, DEC);
         }
@@ -370,14 +369,14 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
 
 void CLI::updateEEPROMMotorData(MotorSynth *motorSynth)
 {
-  if (this->synthEEPROM.isSynthMotorDataDirty())
+  if (this->synthEEPROM->isSynthMotorDataDirty())
   {
     print("EEPROM is dirty. Initializing...");
     for (int note = 0; note < NOTE_TO_VELOCITY_SIZE; note++)
     {
-      this->synthEEPROM.setSynthMotorVelocity(note, motorSynth->getNoteVelocity(note));
+      this->synthEEPROM->setSynthMotorVelocity(note, motorSynth->getNoteVelocity(note));
     }
-    this->synthEEPROM.cleanSynthMotorDataDirtyByte();
+    this->synthEEPROM->cleanSynthMotorDataDirtyByte();
     println("done.");
   }
   else
@@ -385,7 +384,7 @@ void CLI::updateEEPROMMotorData(MotorSynth *motorSynth)
     print("EEPROM is already initialized, loading data from EEPROM to motor...");
     for (int note = 0; note < NOTE_TO_VELOCITY_SIZE; note++)
     {
-      motorSynth->tune_note(note, this->synthEEPROM.getSynthMotorVelocity(note));
+      motorSynth->tune_note(note, this->synthEEPROM->getSynthMotorVelocity(note));
     }
     println("done.");
   }

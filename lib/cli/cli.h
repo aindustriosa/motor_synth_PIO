@@ -24,7 +24,7 @@ public:
      * Parameters:
      *  - blink: pointer to an already configured Blink instance. 
      */
-    void setup(Blink* blink);
+    void setup(Blink* blink, SynthEEPROM* synthEEPROM);
     /**
      * CLI loop serial version.
      * 
@@ -50,7 +50,7 @@ public:
 
 private:
     Blink* blink = nullptr; // Board LED management
-    SynthEEPROM synthEEPROM; // permanent storage
+    SynthEEPROM* synthEEPROM = nullptr; // permanent storage
 
     MidiInterface midiInterface;
 

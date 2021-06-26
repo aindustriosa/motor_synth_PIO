@@ -2,13 +2,16 @@
 #include "cli.h"
 
 CLI cli;
-Blink blink;
+Blink blink; // board's led controller
+SynthEEPROM synthEEPROM; // permanent storage
 
 void setup()
 {
-  // println("Setup: blink");
+  Serial.begin(115200);
+  Serial.println("Setup: blink");
   blink.setup();
-  cli.setup(&blink);
+  synthEEPROM.setup();
+  cli.setup(&blink, &synthEEPROM);
 }
 
 void loop()
