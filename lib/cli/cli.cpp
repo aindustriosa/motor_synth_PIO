@@ -1,11 +1,11 @@
 
 #include "cli.h"
 
-void CLI::setup(Blink* blink, SynthEEPROM* synthEEPROM)
+void CLI::setup(Blink* blink, SynthEEPROM* synthEEPROM, MidiInterface* midiInterface)
 {
   this->blink = blink;
   this->synthEEPROM = synthEEPROM;
-  this->midiInterface.setup();
+  this->midiInterface = midiInterface;
   println("CLI Setup: end");
 }
 
@@ -57,7 +57,7 @@ void CLI::loop_midi()
 
   while (true)
   {
-    int res = this->midiInterface.getSynthEvent(&event);
+    int res = this->midiInterface->getSynthEvent(&event);
     if (res >= 0)
     {
       this->blink->toggle();
@@ -207,7 +207,7 @@ void CLI::menuCommandMidiInterfaceTest()
 
   while (true)
   {
-    int res = this->midiInterface.getSynthEvent(&event);
+    int res = this->midiInterface->getSynthEvent(&event);
     if (res >= 0)
     {
       event.print();
@@ -230,7 +230,7 @@ void CLI::menuCommandMonophonicSynth(int motor_control_pin)
 
   while (true)
   {
-    int res = this->midiInterface.getSynthEvent(&event);
+    int res = this->midiInterface->getSynthEvent(&event);
     if (res >= 0)
     {
       motorSynth.processEvent(&event);
@@ -266,7 +266,7 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
 
   while (true)
   {
-    int res = this->midiInterface.getSynthEvent(&event);
+    int res = this->midiInterface->getSynthEvent(&event);
 
     if (res >= 0)
     {

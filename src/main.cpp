@@ -4,6 +4,7 @@
 CLI cli;
 Blink blink; // board's led controller
 SynthEEPROM synthEEPROM; // permanent storage
+MidiInterface midiInterface;
 
 void setup()
 {
@@ -11,7 +12,8 @@ void setup()
   Serial.println("Setup: blink");
   blink.setup();
   synthEEPROM.setup();
-  cli.setup(&blink, &synthEEPROM);
+  midiInterface.setup();
+  cli.setup(&blink, &synthEEPROM, &midiInterface);
 }
 
 void loop()

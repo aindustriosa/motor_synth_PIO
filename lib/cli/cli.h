@@ -23,8 +23,10 @@ public:
      * 
      * Parameters:
      *  - blink: pointer to an already configured Blink instance. 
+     *  - synthEEPROM: pointer to an already configured SynthEEPROM instance.
+     *  - midiInterface: pointer to an already configured MidiInterface instance.
      */
-    void setup(Blink* blink, SynthEEPROM* synthEEPROM);
+    void setup(Blink* blink, SynthEEPROM* synthEEPROM, MidiInterface* midiInterface );
     /**
      * CLI loop serial version.
      * 
@@ -51,8 +53,7 @@ public:
 private:
     Blink* blink = nullptr; // Board LED management
     SynthEEPROM* synthEEPROM = nullptr; // permanent storage
-
-    MidiInterface midiInterface;
+    MidiInterface* midiInterface = nullptr;
 
     // Main menu commands
     const int MENU_ITEMS_LEN = 5;
