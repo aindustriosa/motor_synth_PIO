@@ -70,15 +70,15 @@ void SynthEEPROM::printSynthMotorData()
     {
         while (!Serial)
         {
-            ; // wait for serial port to be availabl. Ugly hack
+            ; // wait for serial port to be available. Ugly hack
         }
-        Serial.printf("Note ");
+        Serial.print("Note ");
         Serial.print(note, DEC);
-        Serial.printf("  velocity ");
+        Serial.print("  velocity ");
         Serial.print(this->getSynthMotorVelocity(note), DEC);
         Serial.println();
     }
-    Serial.printf("  Magic number: ");
+    Serial.print("  Magic number: ");
     Serial.print(EEPROM.read(this->motorNoteToVelocityIsInitializedAddress), DEC);
     Serial.println();
 }

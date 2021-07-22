@@ -2,6 +2,10 @@
 #include <Arduino.h>
 #include "midi_interface.h"
 
+#ifdef NATIVE
+#include "FakeusbMIDI.h"
+#endif // NATIVE
+
 
 // Helper that translates MIDI inputs to SynthEvent
 void processMIDI(SynthEvent * event);

@@ -4,7 +4,11 @@
 #define _MOTOR_SYNTH_MOTORCONTROLLER_H_
 
 #include <Arduino.h>
+#ifdef NATIVE
+#include "FakeServo.h"
+#else
 #include <Servo.h>
+#endif // NATIVE
 
 class MotorController
 {
