@@ -1,5 +1,5 @@
-#ifndef FakeEEPROM_h
-#define FakeEEPROM_h
+#ifndef FakeUSBMIDI_h
+#define FakeUSBMIDI_h
 
 #include <inttypes.h>
 
@@ -94,6 +94,7 @@ public:
   uint8_t analog2velocity(uint16_t val, uint8_t range);
   bool read(uint8_t channel = 0)
   {
+    return true;
   }
   uint8_t getType(void)
   {
@@ -195,4 +196,4 @@ public:
 
 usb_midi_class usbMIDI;
 
-#endif
+#endif // FakeUSBMIDI_h

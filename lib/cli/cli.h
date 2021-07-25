@@ -12,6 +12,7 @@
 #include "../data_model/synth_event/synth_event.h"
 #include "../motor_synth/motor_synth.h"
 #include "../synth_eeprom/synth_eeprom.h"
+#include "../serial/serial.h"
 
 class CLI
 {
@@ -26,7 +27,10 @@ public:
      *  - synthEEPROM: pointer to an already configured SynthEEPROM instance.
      *  - midiInterface: pointer to an already configured MidiInterface instance.
      */
-    void setup(Blink* blink, SynthEEPROM* synthEEPROM, MidiInterface* midiInterface );
+    void setup( Blink* blink, 
+                SynthEEPROM* synthEEPROM, 
+                MidiInterface* midiInterface, 
+                motor_synth::SerialIO* serial );
     /**
      * CLI loop serial version.
      * 
@@ -54,6 +58,7 @@ private:
     Blink* blink = nullptr; // Board LED management
     SynthEEPROM* synthEEPROM = nullptr; // permanent storage
     MidiInterface* midiInterface = nullptr;
+    motor_synth::SerialIO* serialIO = nullptr;
 
     // Main menu commands
     const int MENU_ITEMS_LEN = 5;
@@ -69,30 +74,17 @@ private:
      */
     int getSerialPositiveValue();
     /**
-     * Prints on serial port the given text.
-     */
-    void print(const char *text);
-    /**
-     * Prints on serial port the given text.
-     */
-    void println(const char *text);
-    /**
-     * Prints on serial port the given text and the number.
-     */
-    void println(const char *text, int number);
-
-    /**
      * Sweeps up the motor speed. Used by menuCommandSweepMotor()
      * 
      * param delay_between_changes_millis: time between a speed change in milliseconds.
      */
-    void sweepSpeedUpwards(int delay_between_changes_millis, MotorController *motor);
+    void sweepSpeedUpwards(int delay_between_changes_millis, motor_synth::MotorController *motor);
     /**
      * Sweeps down the motor speed. Used by menuCommandSweepMotor()
      * 
      * param delay_between_changes_millis: time between a speed change in milliseconds.
      */
-    void sweepSpeedDownwards(int delay_between_changes_millis, MotorController *motor);
+    void sweepSpeedDownwards(int delay_between_changes_millis, motor_synth::MotorController *motor);
     /**
      * Makes the CLI wait by blinking the internal LED.
      */

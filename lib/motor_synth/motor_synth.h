@@ -5,12 +5,16 @@
 
 #include "../data_model/synth_event/synth_event.h"
 #include "../motor_controller/motor_controller.h"
+#include "../serial/serial.h"
 
 class MotorSynth
 {
 public:
-    void setup(int motor_control_pin);
-    void setup(int motor_control_pin, int events_stack_size);
+    void setup(motor_synth::MotorController* motor, 
+                motor_synth::SerialIO* serial );
+    void setup(motor_synth::MotorController* motor, 
+                int events_stack_size, 
+                motor_synth::SerialIO* serial );
     void processEvent(SynthEvent *event);
     /**
      * Prints current note_to_velocity table with note names
@@ -49,7 +53,9 @@ public:
     void updateSound();
 
 private:
-    MotorController motor;
+    motor_synth::MotorController* motor = nullptr;
+    motor_synth::SerialIO* serialIO = nullptr;
+    
 #define EVENTS_STACK_MAX_SIZE 10
     int events_stack_size = EVENTS_STACK_MAX_SIZE;
     // Notes pressed and not released yet.

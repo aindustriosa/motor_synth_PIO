@@ -4,7 +4,7 @@
 
 void MotorSynth::update_note_to_velocity()
 {
-    int max_speed = this->motor.getMaxSpeed();
+    int max_speed = this->motor->getMaxSpeed();
     for (int i = 0; i < NOTE_TO_VELOCITY_SIZE; i++)
     {
         noteToVelocity[i] = map(i,
@@ -15,27 +15,27 @@ void MotorSynth::update_note_to_velocity()
 
 void MotorSynth::printNoteToVelocity()
 {
-    Serial.println("int noteToVelocity[NOTE_TO_VELOCITY_SIZE] = {");
+    this->serialIO->println("int noteToVelocity[NOTE_TO_VELOCITY_SIZE] = {");
     for (int i = 0; i < NOTE_TO_VELOCITY_SIZE; i++)
     {
         if (i % 10 == 0)
         {
-            Serial.print("    ");
+            this->serialIO->print("    ");
         }
-        Serial.print(noteToVelocity[i], DEC);
+        this->serialIO->print(noteToVelocity[i], DEC);
         if (i < NOTE_TO_VELOCITY_SIZE - 1)
         {
             if (i % 10 == 9)
             {
-                Serial.println(",");
+                this->serialIO->println(",");
             }
             else
             {
-                Serial.print(", ");
+                this->serialIO->print(", ");
             }
         }
     }
-    Serial.println("    };");
+    this->serialIO->println("    };");
 }
 
 void numberToNote(int value, char *note, int len_note)
@@ -140,26 +140,31 @@ void MotorSynth::printTunning()
     for (int i = 0; i < NOTE_TO_VELOCITY_SIZE; i++)
     {
         numberToNote(i, note, len_note);
-        Serial.print(i, DEC);
-        Serial.print(" - ");
-        Serial.print(note);
-        Serial.print(": ");
-        Serial.print(noteToVelocity[i], DEC);
-        Serial.println();
+        this->serialIO->print(i, DEC);
+        this->serialIO->print(" - ");
+        this->serialIO->print(note);
+        this->serialIO->print(": ");
+        this->serialIO->print(noteToVelocity[i], DEC);
+        this->serialIO->println();
     }
 }
 
-void MotorSynth::setup(int motor_control_pin)
+void MotorSynth::setup(motor_synth::MotorController *motor,
+                       motor_synth::SerialIO *serial)
 {
-    this->motor.setup(motor_control_pin);
+    this->motor = motor;
     this->events_stack_size = EVENTS_STACK_MAX_SIZE;
+    this->serialIO = serial;
     // update_note_to_velocity();
-    Serial.println("MotorSynth setup completed");
+    //this->serialIO->println("MotorSynth setup completed");
 }
 
-void MotorSynth::setup(int motor_control_pin, int events_stack_size)
+void MotorSynth::setup(motor_synth::MotorController *motor,
+                       int events_stack_size,
+                       motor_synth::SerialIO *serial)
 {
-    this->motor.setup(motor_control_pin);
+    this->motor = motor;
+    this->serialIO = serial;
     if ((events_stack_size >= EVENTS_STACK_MAX_SIZE) || (events_stack_size < 1))
     {
         this->events_stack_size = EVENTS_STACK_MAX_SIZE;
@@ -169,7 +174,7 @@ void MotorSynth::setup(int motor_control_pin, int events_stack_size)
         this->events_stack_size = events_stack_size;
     }
     //update_note_to_velocity();
-    Serial.println("MotorSynth setup completed");
+    this->serialIO->println("MotorSynth setup completed");
 }
 
 void MotorSynth::processEvent(SynthEvent *event)
@@ -179,7 +184,7 @@ void MotorSynth::processEvent(SynthEvent *event)
     {
     case SynthEventType::NoteOn:
         // First of all, we play the note
-        this->motor.setSpeed(noteToVelocity[event->getNote()]);
+        this->motor->setSpeed(noteToVelocity[event->getNote()]);
         // Now, we add the note to the stack
         if (this->eventsStackIndex >= this->events_stack_size - 1)
         {
@@ -199,11 +204,11 @@ void MotorSynth::processEvent(SynthEvent *event)
         if (this->eventsStackIndex < 0)
         {
             // No notes in the stack
-            this->motor.setSpeed(DRONE_VELOCITY);
+            this->motor->setSpeed(DRONE_VELOCITY);
         }
         else
         {
-            this->motor.setSpeed(noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
+            this->motor->setSpeed(noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
         }
         break;
 
@@ -214,7 +219,7 @@ void MotorSynth::processEvent(SynthEvent *event)
 
 void MotorSynth::updateSound()
 {
-    this->motor.setSpeed(noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
+    this->motor->setSpeed(noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
 }
 
 void MotorSynth::removeOldestEventInStack()
@@ -284,15 +289,15 @@ void MotorSynth::printStack()
     }
 
     const int currentIndex = this->eventsStackIndex;
-    Serial.println("--- Current Stack ---");
+    this->serialIO->println("--- Current Stack ---");
     for (int i = 0; i <= currentIndex; i++)
     {
-        Serial.print("- ");
-        Serial.print(i, DEC);
-        Serial.print(" - ");
+        this->serialIO->print("- ");
+        this->serialIO->print(i, DEC);
+        this->serialIO->print(" - ");
         this->eventsStack[i].print();
     }
-    Serial.println("--------------------");
+    this->serialIO->println("--------------------");
 }
 
 void MotorSynth::tune_note(int note, int16_t velocity)
@@ -312,7 +317,6 @@ int16_t MotorSynth::getNoteVelocity(int note)
     }
     return noteToVelocity[note];
 }
-
 
 void MotorSynth::getCurrentlyPlayedNote(SynthEvent *event)
 {
