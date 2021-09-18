@@ -20,7 +20,6 @@ void setup()
 
 void loop()
 {
-  
   // Uncomment the MIDI based user interface
   //cli.loop_midi();
   // Uncomment for a Serial based UI

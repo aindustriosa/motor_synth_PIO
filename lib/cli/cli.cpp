@@ -233,15 +233,7 @@ void CLI::menuCommandMonophonicSynth(int motor_control_pin)
 
 void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
 {
-  this->serialIO->println("\n\n\n\nMonophonic Synthesizer tuner (LED toggles on new event).");
-  this->serialIO->println("Press the MIDI note that you want to tune.");
-  this->serialIO->println("Use a MIDI control (fader, potentiometer) to perform the tunning.");
-  this->serialIO->println("The tunning change is relative to the control change, if you want to tune down a note");
-  this->serialIO->println("turn all right the potentiometer before pushing the note an then go left.");
-  this->serialIO->println("Release the MIDI note to stop the tunning (other notes pressed before this will be discarded).");
-  this->serialIO->println("Move a control with no notes pressed to update the EEPROM.");
-  this->serialIO->println("Please, read the docs to get some ideas on how to send MIDI to the device.");
-  this->serialIO->println("Reset the board to go back to the menu\n\n");
+  printMenuCommandMonophonicSynthTunning();
 
   motor_synth::ServoMotorController motor;
   motor.setup(motor_control_pin);
@@ -259,6 +251,7 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
 
   while (true)
   {
+    printMenuCommandMonophonicSynthTunning();
     int res = this->midiInterface->getSynthEvent(&event);
 
     if (res >= 0)
@@ -358,6 +351,18 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
       }
     }
   }
+}
+
+void CLI::printMenuCommandMonophonicSynthTunning(){
+  this->serialIO->println("\n\n\n\nMonophonic Synthesizer tuner (LED toggles on new event).");
+  this->serialIO->println("Press the MIDI note that you want to tune.");
+  this->serialIO->println("Use a MIDI control (fader, potentiometer) to perform the tunning.");
+  this->serialIO->println("The tunning change is relative to the control change, if you want to tune down a note");
+  this->serialIO->println("turn all right the potentiometer before pushing the note an then go left.");
+  this->serialIO->println("Release the MIDI note to stop the tunning (other notes pressed before this will be discarded).");
+  this->serialIO->println("Move a control with no notes pressed to update the EEPROM.");
+  this->serialIO->println("Please, read the docs to get some ideas on how to send MIDI to the device.");
+  this->serialIO->println("Reset the board to go back to the menu\n\n");
 }
 
 void CLI::updateEEPROMMotorData(MotorSynth *motorSynth)

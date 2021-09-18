@@ -68,6 +68,8 @@ private:
      * Prints on serial port the main menu highlighting the selected item.
      */
     void printMenu(int menu_item_selected);
+
+    void printMenuCommandMonophonicSynthTunning();
     /**
      * Waits for the user to enter a positive number. Returns it.
      * Returns a negative value on failure.
