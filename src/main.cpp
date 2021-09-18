@@ -26,6 +26,6 @@ void loop()
   // Uncomment for a Serial based UI
   //cli.loop_serial();
 
-   // Or run an specific application:
-   cli.menuCommandMonophonicSynthTunning(cli.MOTOR_CONTROL_PIN);
+  // Or run an specific application:
+  cli.menuCommandMonophonicSynthTunning(cli.MOTOR_CONTROL_PIN);
 }
