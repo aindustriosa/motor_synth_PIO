@@ -12,6 +12,7 @@ void processMIDI(SynthEvent * event);
 
 void MidiInterface::setup()
 {
+    // TODO: Use arduino_serial
     Serial.println("Setting up MidiInterface");
 }
 

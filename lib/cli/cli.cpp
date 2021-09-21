@@ -251,7 +251,6 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
 
   while (true)
   {
-    printMenuCommandMonophonicSynthTunning();
     int res = this->midiInterface->getSynthEvent(&event);
 
     if (res >= 0)
@@ -264,7 +263,7 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
         motorSynth.processEvent(&event);
         motorSynth.getCurrentlyPlayedNote(&currentlyPlayedNote);
 
-        // if this is different to noteBeingTunned we  are tunning a different note.
+        // if this is different to noteBeingTunned we are tunning a different note.
         // we must reset the tunning configuration
         if (currentlyPlayedNote.getType() != SynthEventType::NoteOn)
         {

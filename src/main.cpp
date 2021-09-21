@@ -2,11 +2,17 @@
 #include "cli.h"
 #include "arduino_serial.h"
 
+#define DO_NOT_PRINT
+
 CLI cli;
 Blink blink; // board's led controller
 SynthEEPROM synthEEPROM; // permanent storage
 MidiInterface midiInterface;
+#ifndef DO_NOT_PRINT
 motor_synth::ArduinoSerialIO serial;
+#else
+motor_synth::ArduinoSerialIODoNotPrint serial;
+#endif
 
 void setup()
 {
