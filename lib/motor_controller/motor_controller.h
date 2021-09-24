@@ -7,8 +7,6 @@ namespace motor_synth
 {
     struct MotorController
     {
-        virtual ~MotorController() = default;
-
         virtual void setup(int control_pin) = 0;
         virtual void setSpeed(int speed) = 0;
         virtual int getMaxSpeed() = 0;

@@ -30,7 +30,8 @@ public:
     void setup( Blink* blink, 
                 SynthEEPROM* synthEEPROM, 
                 MidiInterface* midiInterface, 
-                motor_synth::SerialIO* serial );
+                motor_synth::SerialIO* serial,
+                motor_synth::MotorSynth* motorSynth);
     /**
      * CLI loop serial version.
      * 
@@ -46,19 +47,18 @@ public:
      */
     void loop_midi();
 
-    void menuCommandChangeMotorOnUserSerialInput(int motor_control_pin);
-    void menuCommandSweepMotor(int motor_control_pin);
+    void menuCommandChangeMotorOnUserSerialInput();
+    void menuCommandSweepMotor();
     void menuCommandMidiInterfaceTest();
-    void menuCommandMonophonicSynth(int motor_control_pin);
-    void menuCommandMonophonicSynthTunning(int motor_control_pin);
-
-    const int MOTOR_CONTROL_PIN = 9;
+    void menuCommandMonophonicSynth();
+    void menuCommandMonophonicSynthTunning();
 
 private:
     Blink* blink = nullptr; // Board LED management
     SynthEEPROM* synthEEPROM = nullptr; // permanent storage
     MidiInterface* midiInterface = nullptr;
     motor_synth::SerialIO* serialIO = nullptr;
+    motor_synth::MotorSynth* motorSynth = nullptr;
 
     // Main menu commands
     const int MENU_ITEMS_LEN = 5;
@@ -95,7 +95,7 @@ private:
     /**
      * Updates all the EEPROM motor data
      */
-    void updateEEPROMMotorData(MotorSynth * motorSynth);
+    void updateEEPROMMotorData(motor_synth::MotorSynth * motorSynth);
 };
 
 #endif
