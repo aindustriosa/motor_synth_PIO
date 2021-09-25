@@ -6,6 +6,7 @@
     },
     "files.associations": {
         "istream": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "utility": "cpp"
     }
 }

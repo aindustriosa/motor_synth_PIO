@@ -62,6 +62,9 @@ namespace motor_synth
      */
         void updateSound();
 
+         int get_events_stack_size() {return events_stack_size;}
+         SynthEvent* get_eventsStack() {return eventsStack;}
+         int get_eventsStackIndex() {return eventsStackIndex;}
     private:
         motor_synth::SerialIO *serialIO = nullptr;
 

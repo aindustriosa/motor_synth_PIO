@@ -162,7 +162,7 @@ namespace motor_synth
         this->events_stack_size = EVENTS_STACK_MAX_SIZE;
         this->serialIO = serial;
         // update_note_to_velocity();
-        //this->serialIO->println("MotorSynth setup completed");
+        this->serialIO->println("MotorSynth setup completed");
     }
 
     void MotorSynth::setup(
