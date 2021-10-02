@@ -1,14 +1,20 @@
 
 #include "cli.h"
+#include "servo_motor_controller.h"
 
-void CLI::setup()
+void CLI::setup(
+    Blink *blink,
+    SynthEEPROM *synthEEPROM,
+    MidiInterface *midiInterface,
+    motor_synth::SerialIO *serialIO,
+    motor_synth::MotorSynth *motorSynth)
 {
-  Serial.begin(115200);
-  println("Setup: blink");
-  this->blink.setup();
-  this->synthEEPROM.setup();
-  this->midiInterface.setup();
-  println("Setup: end");
+  this->blink = blink;
+  this->synthEEPROM = synthEEPROM;
+  this->midiInterface = midiInterface;
+  this->serialIO = serialIO;
+  this->motorSynth = motorSynth;
+  this->serialIO->println("CLI Setup: end");
 }
 
 void CLI::loop_serial()
@@ -17,15 +23,15 @@ void CLI::loop_serial()
 
   int value = getSerialPositiveValue();
   if (value == 1)
-    menuCommandChangeMotorOnUserSerialInput(MOTOR_CONTROL_PIN);
+    menuCommandChangeMotorOnUserSerialInput();
   if (value == 2)
-    menuCommandSweepMotor(MOTOR_CONTROL_PIN);
+    menuCommandSweepMotor();
   if (value == 3)
     menuCommandMidiInterfaceTest();
   if (value == 4)
-    menuCommandMonophonicSynth(MOTOR_CONTROL_PIN);
+    menuCommandMonophonicSynth();
   if (value == 5)
-    menuCommandMonophonicSynthTunning(MOTOR_CONTROL_PIN);
+    menuCommandMonophonicSynthTunning();
 
   if (value < 0)
     waitBlinking();
@@ -33,23 +39,23 @@ void CLI::loop_serial()
 
 void CLI::printMenu(int menu_item_selected)
 {
-  println("##############################################");
-  println("Motor Synth: Menu");
+  this->serialIO->println("##############################################");
+  this->serialIO->println("Motor Synth: Menu");
   if (menu_item_selected == 0)
-    print("SELECTED - ");
-  println("1: Change motor speed using this serial port");
+    this->serialIO->print("SELECTED - ");
+  this->serialIO->println("1: Change motor speed using this serial port");
   if (menu_item_selected == 1)
-    print("SELECTED - ");
-  println("2: Sweep motor speed");
+    this->serialIO->print("SELECTED - ");
+  this->serialIO->println("2: Sweep motor speed");
   if (menu_item_selected == 2)
-    print("SELECTED - ");
-  println("3: MIDI in to serial port");
+    this->serialIO->print("SELECTED - ");
+  this->serialIO->println("3: MIDI in to serial port");
   if (menu_item_selected == 3)
-    print("SELECTED - ");
-  println("4: Monophonic synth");
+    this->serialIO->print("SELECTED - ");
+  this->serialIO->println("4: Monophonic synth");
   if (menu_item_selected == 4)
-    print("SELECTED - ");
-  println("5: Monophonic synth tunning");
+    this->serialIO->print("SELECTED - ");
+  this->serialIO->println("5: Monophonic synth tunning");
 }
 
 void CLI::loop_midi()
@@ -59,22 +65,22 @@ void CLI::loop_midi()
 
   while (true)
   {
-    int res = this->midiInterface.getSynthEvent(&event);
+    int res = this->midiInterface->getSynthEvent(&event);
     if (res >= 0)
     {
-      this->blink.toggle();
+      this->blink->toggle();
       if (event.getType() == SynthEventType::NoteOff)
       {
         if (menu_item_selected == 0)
-          menuCommandChangeMotorOnUserSerialInput(MOTOR_CONTROL_PIN);
+          menuCommandChangeMotorOnUserSerialInput();
         if (menu_item_selected == 1)
-          menuCommandSweepMotor(MOTOR_CONTROL_PIN);
+          menuCommandSweepMotor();
         if (menu_item_selected == 2)
           menuCommandMidiInterfaceTest();
         if (menu_item_selected == 3)
-          menuCommandMonophonicSynth(MOTOR_CONTROL_PIN);
+          menuCommandMonophonicSynth();
         if (menu_item_selected == 4)
-          menuCommandMonophonicSynthTunning(MOTOR_CONTROL_PIN);
+          menuCommandMonophonicSynthTunning();
       }
 
       if (event.getType() == SynthEventType::ControlChange)
@@ -90,7 +96,7 @@ void CLI::waitBlinking()
 {
   for (int i = 0; i < 20; i++)
   {
-    blink.blink();
+    this->blink->blink();
   }
 }
 
@@ -104,31 +110,11 @@ int CLI::getSerialPositiveValue()
   return res;
 }
 
-void CLI::println(const char *text)
+void CLI::menuCommandChangeMotorOnUserSerialInput()
 {
-  Serial.println(text);
-}
-
-void CLI::print(const char *text)
-{
-  Serial.print(text);
-}
-
-void CLI::println(const char *text, int number)
-{
-  Serial.print(text);
-  Serial.println(number);
-}
-
-void CLI::menuCommandChangeMotorOnUserSerialInput(int motor_control_pin)
-{
-  MotorController motor;
-  println("Setup: motor on pin", motor_control_pin);
-  motor.setup(motor_control_pin);
-
-  println("Changing motor speed using this serial port:\nEnter a number to change the speed");
-  println("Values from 0 to ", motor.getMaxSpeed());
-  println("Reset the board to go back to the main menu.");
+  this->serialIO->println("Changing motor speed using this serial port:\nEnter a number to change the speed");
+  this->serialIO->println("Values from 0 to ", this->motorSynth->motors[0].getMaxSpeed());
+  this->serialIO->println("Reset the board to go back to the main menu.");
 
   while (1)
   {
@@ -138,21 +124,17 @@ void CLI::menuCommandChangeMotorOnUserSerialInput(int motor_control_pin)
       value = getSerialPositiveValue();
     }
 
-    motor.setSpeed(value);
-    println("Speed:", value);
-    blink.toggle();
+    this->motorSynth->motors[0].setSpeed(value);
+    this->serialIO->println("Speed:", value);
+    this->blink->toggle();
   }
 }
 
-void CLI::menuCommandSweepMotor(int motor_control_pin)
+void CLI::menuCommandSweepMotor()
 {
-  MotorController motor;
-  println("Setup: motor on pin ", motor_control_pin);
-  motor.setup(motor_control_pin);
-
-  println("Sweeping motor speed:");
-  println("Please enter a value for the wait millisecs between speed changes (default is 100)");
-  println("Reset the board to go back to the main menu.");
+  this->serialIO->println("Sweeping motor speed:");
+  this->serialIO->println("Please enter a value for the wait millisecs between speed changes (default is 100)");
+  this->serialIO->println("Reset the board to go back to the main menu.");
 
   int delay_between_changes_millis = 100;
   int value = -1;
@@ -170,93 +152,80 @@ void CLI::menuCommandSweepMotor(int motor_control_pin)
 
   while (1)
   {
-    sweepSpeedUpwards(delay_between_changes_millis, &motor);
-    sweepSpeedDownwards(delay_between_changes_millis, &motor);
+    sweepSpeedUpwards(delay_between_changes_millis, &(this->motorSynth->motors[0]));
+    sweepSpeedDownwards(delay_between_changes_millis, &(this->motorSynth->motors[0]));
   }
 }
 
-void CLI::sweepSpeedUpwards(int delay_between_changes_millis, MotorController *motor)
+void CLI::sweepSpeedUpwards(int delay_between_changes_millis, motor_synth::MotorController *motor)
 {
   int maxSpeed = motor->getMaxSpeed();
   for (int value = 0; value <= maxSpeed; value++)
   {
     motor->setSpeed(value);
-    println("Speed:", value);
-    blink.toggle();
+    this->serialIO->println("Speed:", value);
+    this->blink->toggle();
     delay(delay_between_changes_millis);
   }
 }
 
-void CLI::sweepSpeedDownwards(int delay_between_changes_millis, MotorController *motor)
+void CLI::sweepSpeedDownwards(int delay_between_changes_millis, motor_synth::MotorController *motor)
 {
   int maxSpeed = motor->getMaxSpeed();
   for (int value = maxSpeed; value >= 0; value--)
   {
     motor->setSpeed(value);
-    println("Speed:", value);
-    blink.toggle();
+    this->serialIO->println("Speed:", value);
+    this->blink->toggle();
     delay(delay_between_changes_millis);
   }
 }
 
 void CLI::menuCommandMidiInterfaceTest()
 {
-  println("Printing out incoming MIDI events (LED toggles on new event).");
-  println("Please, read the docs to get some ideas on how to send MIDI to the device.");
-  println("Reset the board to go back to the menu");
+  this->serialIO->println("Printing out incoming MIDI events (LED toggles on new event).");
+  this->serialIO->println("Please, read the docs to get some ideas on how to send MIDI to the device.");
+  this->serialIO->println("Reset the board to go back to the menu");
 
   SynthEvent event = SynthEvent();
 
   while (true)
   {
-    int res = this->midiInterface.getSynthEvent(&event);
+    int res = this->midiInterface->getSynthEvent(&event);
     if (res >= 0)
     {
       event.print();
-      blink.toggle();
+      this->blink->toggle();
     }
   }
 }
 
-void CLI::menuCommandMonophonicSynth(int motor_control_pin)
+void CLI::menuCommandMonophonicSynth()
 {
   SynthEvent event = SynthEvent();
-  MotorSynth motorSynth;
-  motorSynth.setup(motor_control_pin);
 
-  println("Monophonic Synthesizer (LED toggles on new event).");
-  println("Please, read the docs to get some ideas on how to send MIDI to the device.");
-  println("Reset the board to go back to the menu");
+  this->serialIO->println("Monophonic Synthesizer (LED toggles on new event).");
+  this->serialIO->println("Please, read the docs to get some ideas on how to send MIDI to the device.");
+  this->serialIO->println("Reset the board to go back to the menu");
 
-  motorSynth.printTunning();
+  //this->motorSynth->printTunning();
 
   while (true)
   {
-    int res = this->midiInterface.getSynthEvent(&event);
+    int res = this->midiInterface->getSynthEvent(&event);
     if (res >= 0)
     {
-      motorSynth.processEvent(&event);
+      this->motorSynth->processEvent(&event);
       event.print();
-      blink.toggle();
+      this->blink->toggle();
     }
   }
 }
 
-void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
+void CLI::menuCommandMonophonicSynthTunning()
 {
-  println("\n\n\n\nMonophonic Synthesizer tuner (LED toggles on new event).");
-  println("Press the MIDI note that you want to tune.");
-  println("Use a MIDI control (fader, potentiometer) to perform the tunning.");
-  println("The tunning change is relative to the control change, if you want to tune down a note");
-  println("turn all right the potentiometer before pushing the note an then go left.");
-  println("Release the MIDI note to stop the tunning (other notes pressed before this will be discarded).");
-  println("Move a control with no notes pressed to update the EEPROM.");
-  println("Please, read the docs to get some ideas on how to send MIDI to the device.");
-  println("Reset the board to go back to the menu\n\n");
-
-  MotorSynth motorSynth;
-  motorSynth.setup(motor_control_pin);
-  this->updateEEPROMMotorData(&motorSynth);
+  printMenuCommandMonophonicSynthTunning();
+  this->updateEEPROMMotorData(this->motorSynth);
 
   SynthEvent event = SynthEvent();
   // The note we are going to tune. InvalidType if no note active.
@@ -268,7 +237,7 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
 
   while (true)
   {
-    int res = this->midiInterface.getSynthEvent(&event);
+    int res = this->midiInterface->getSynthEvent(&event);
 
     if (res >= 0)
     {
@@ -277,10 +246,10 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
       case SynthEventType::NoteOn:
         // We send the note to be proccesed by the synth, then we get the
         // current played note and set it to be tuned
-        motorSynth.processEvent(&event);
-        motorSynth.getCurrentlyPlayedNote(&currentlyPlayedNote);
+        this->motorSynth->processEvent(&event);
+        this->motorSynth->getCurrentlyPlayedNote(&currentlyPlayedNote);
 
-        // if this is different to noteBeingTunned we  are tunning a different note.
+        // if this is different to noteBeingTunned we are tunning a different note.
         // we must reset the tunning configuration
         if (currentlyPlayedNote.getType() != SynthEventType::NoteOn)
         {
@@ -294,19 +263,19 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
         event.copyInto(&noteBeingTunned);
         controlValue = -1;
         noteBeingTunned.print();
-        blink.toggle();
-        Serial.print("Current velocity: ");
-        Serial.println(motorSynth.getNoteVelocity(noteBeingTunned.getNote()), DEC);
+        this->blink->toggle();
+        this->serialIO->print("Current velocity: ");
+        this->serialIO->println(this->motorSynth->getNoteVelocity(noteBeingTunned.getNote()), DEC);
 
         break;
 
       case SynthEventType::NoteOff: // Update noteBeingTunned
         // We send the note to be proccesed by the synth, then we get the
         // current played note and set it to be tuned
-        motorSynth.processEvent(&event);
-        motorSynth.getCurrentlyPlayedNote(&currentlyPlayedNote);
+        this->motorSynth->processEvent(&event);
+        this->motorSynth->getCurrentlyPlayedNote(&currentlyPlayedNote);
 
-        motorSynth.printNoteToVelocity();
+        this->motorSynth->printNoteToVelocity();
 
         // if this is different to noteBeingTunned we  are tunning a different note.
         // we must reset the tunning configuration
@@ -324,16 +293,16 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
         currentlyPlayedNote.copyInto(&noteBeingTunned);
         controlValue = -1;
         noteBeingTunned.print();
-        blink.toggle();
-        Serial.print("Current velocity: ");
-        Serial.println(motorSynth.getNoteVelocity(noteBeingTunned.getNote()), DEC);
+        this->blink->toggle();
+        this->serialIO->print("Current velocity: ");
+        this->serialIO->println(this->motorSynth->getNoteVelocity(noteBeingTunned.getNote()), DEC);
 
         break;
 
       case SynthEventType::ControlChange:
         if (noteBeingTunned.getType() != SynthEventType::NoteOn)
         {
-          this->updateEEPROMMotorData(&motorSynth);
+          this->updateEEPROMMotorData(this->motorSynth);
           //this->synthEEPROM.printSynthMotorData();
           break;
         }
@@ -351,13 +320,13 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
             difference = -1;
           }
 
-          int updatedVelocity = motorSynth.getNoteVelocity(noteBeingTunned.getNote()) +
+          int updatedVelocity = this->motorSynth->getNoteVelocity(noteBeingTunned.getNote()) +
                                 difference;
-          motorSynth.tune_note(noteBeingTunned.getNote(), updatedVelocity);
-          motorSynth.updateSound();
-          this->synthEEPROM.uncleanSynthMotorDataDirtyByte();
-          Serial.print("updatedVelocity ");
-          Serial.println(updatedVelocity, DEC);
+          this->motorSynth->tune_note(noteBeingTunned.getNote(), updatedVelocity);
+          this->motorSynth->updateSound();
+          this->synthEEPROM->uncleanSynthMotorDataDirtyByte();
+          this->serialIO->print("updatedVelocity ");
+          this->serialIO->println(updatedVelocity, DEC);
         }
         controlValue = event.getControlValue();
         break;
@@ -369,25 +338,38 @@ void CLI::menuCommandMonophonicSynthTunning(int motor_control_pin)
   }
 }
 
-void CLI::updateEEPROMMotorData(MotorSynth *motorSynth)
+void CLI::printMenuCommandMonophonicSynthTunning()
 {
-  if (this->synthEEPROM.isSynthMotorDataDirty())
+  this->serialIO->println("\n\n\n\nMonophonic Synthesizer tuner (LED toggles on new event).");
+  this->serialIO->println("Press the MIDI note that you want to tune.");
+  this->serialIO->println("Use a MIDI control (fader, potentiometer) to perform the tunning.");
+  this->serialIO->println("The tunning change is relative to the control change, if you want to tune down a note");
+  this->serialIO->println("turn all right the potentiometer before pushing the note an then go left.");
+  this->serialIO->println("Release the MIDI note to stop the tunning (other notes pressed before this will be discarded).");
+  this->serialIO->println("Move a control with no notes pressed to update the EEPROM.");
+  this->serialIO->println("Please, read the docs to get some ideas on how to send MIDI to the device.");
+  this->serialIO->println("Reset the board to go back to the menu\n\n");
+}
+
+void CLI::updateEEPROMMotorData(motor_synth::MotorSynth *motorSynth)
+{
+  if (this->synthEEPROM->isSynthMotorDataDirty())
   {
-    print("EEPROM is dirty. Initializing...");
+    this->serialIO->print("EEPROM is dirty. Initializing...");
     for (int note = 0; note < NOTE_TO_VELOCITY_SIZE; note++)
     {
-      this->synthEEPROM.setSynthMotorVelocity(note, motorSynth->getNoteVelocity(note));
+      this->synthEEPROM->setSynthMotorVelocity(note, motorSynth->getNoteVelocity(note));
     }
-    this->synthEEPROM.cleanSynthMotorDataDirtyByte();
-    println("done.");
+    this->synthEEPROM->cleanSynthMotorDataDirtyByte();
+    this->serialIO->println("done.");
   }
   else
   {
-    print("EEPROM is already initialized, loading data from EEPROM to motor...");
+    this->serialIO->print("EEPROM is already initialized, loading data from EEPROM to motor...");
     for (int note = 0; note < NOTE_TO_VELOCITY_SIZE; note++)
     {
-      motorSynth->tune_note(note, this->synthEEPROM.getSynthMotorVelocity(note));
+      this->motorSynth->tune_note(note, this->synthEEPROM->getSynthMotorVelocity(note));
     }
-    println("done.");
+    this->serialIO->println("done.");
   }
 }

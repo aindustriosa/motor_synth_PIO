@@ -7,7 +7,12 @@
 #ifndef _MOTOR_SYNTH_EEPROM_H_
 #define _MOTOR_SYNTH_EEPROM_H_
 
+#ifdef NATIVE
+#include "FakeEEPROM.h"
+#else
 #include <EEPROM.h>
+#endif // NATIVE
+
 #include "../motor_synth/motor_synth.h"
 
 class SynthEEPROM

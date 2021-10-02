@@ -12,7 +12,7 @@ Automatic patch instructions (tested in raspbian):
 2. sudo chmod +x /usr/bin/autoaconnect.py
 3. sudo nano /etc/udev/rules.d/77-motor_synth.rules
 And copy one of these rules
-# Not working: shoud work when a new MIDI device is connected
+# Not working: should work when a new MIDI device is connected
 #ACTION=="bind", SUBSYSTEM=="snd_seq", DRIVERS=="snd-usb-audio", RUN+="/usr/bin/autoaconnect.py"
 # Works: Launch rule when the Teensy is connected
 #ATTRS{idVendor}=="16c0", ATTRS{idProduct}=="0489", RUN="/usr/bin/autoaconnect.py"

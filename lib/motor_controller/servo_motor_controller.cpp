@@ -1,13 +1,16 @@
 
-#include "motor_controller.h"
+#include "servo_motor_controller.h"
 
-void MotorController::setup(int control_pin){
+namespace motor_synth
+{
+
+void ServoMotorController::setup(int control_pin){
   servo.attach(control_pin, servoMinValue, servoMaxValue);
   servo.write(0);
   delay(5000);
 }
 
-void MotorController::setSpeed(int speed){
+void ServoMotorController::setSpeed(int speed){
     int value = speed + servoMinValue;
     if (value < servoMinValue) {
         value = servoMinValue;
@@ -18,6 +21,8 @@ void MotorController::setSpeed(int speed){
     servo.writeMicroseconds(value);
 }
 
-int MotorController::getMaxSpeed(){
+int ServoMotorController::getMaxSpeed(){
     return servoMaxValue - servoMinValue;
 }
+
+} // namespace motor_synth

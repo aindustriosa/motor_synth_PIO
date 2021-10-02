@@ -12,6 +12,7 @@
 #include "../data_model/synth_event/synth_event.h"
 #include "../motor_synth/motor_synth.h"
 #include "../synth_eeprom/synth_eeprom.h"
+#include "../serial/serial.h"
 
 class CLI
 {
@@ -20,8 +21,17 @@ public:
      * CLI configuration.
      * 
      * Use in the main setup to setup the CLI.
+     * 
+     * Parameters:
+     *  - blink: pointer to an already configured Blink instance. 
+     *  - synthEEPROM: pointer to an already configured SynthEEPROM instance.
+     *  - midiInterface: pointer to an already configured MidiInterface instance.
      */
-    void setup();
+    void setup( Blink* blink, 
+                SynthEEPROM* synthEEPROM, 
+                MidiInterface* midiInterface, 
+                motor_synth::SerialIO* serial,
+                motor_synth::MotorSynth* motorSynth);
     /**
      * CLI loop serial version.
      * 
@@ -37,19 +47,18 @@ public:
      */
     void loop_midi();
 
-    void menuCommandChangeMotorOnUserSerialInput(int motor_control_pin);
-    void menuCommandSweepMotor(int motor_control_pin);
+    void menuCommandChangeMotorOnUserSerialInput();
+    void menuCommandSweepMotor();
     void menuCommandMidiInterfaceTest();
-    void menuCommandMonophonicSynth(int motor_control_pin);
-    void menuCommandMonophonicSynthTunning(int motor_control_pin);
-
-    const int MOTOR_CONTROL_PIN = 9;
+    void menuCommandMonophonicSynth();
+    void menuCommandMonophonicSynthTunning();
 
 private:
-    Blink blink; // Board LED management
-    SynthEEPROM synthEEPROM; // permanent storage
-
-    MidiInterface midiInterface;
+    Blink* blink = nullptr; // Board LED management
+    SynthEEPROM* synthEEPROM = nullptr; // permanent storage
+    MidiInterface* midiInterface = nullptr;
+    motor_synth::SerialIO* serialIO = nullptr;
+    motor_synth::MotorSynth* motorSynth = nullptr;
 
     // Main menu commands
     const int MENU_ITEMS_LEN = 5;
@@ -59,36 +68,25 @@ private:
      * Prints on serial port the main menu highlighting the selected item.
      */
     void printMenu(int menu_item_selected);
+
+    void printMenuCommandMonophonicSynthTunning();
     /**
      * Waits for the user to enter a positive number. Returns it.
      * Returns a negative value on failure.
      */
     int getSerialPositiveValue();
     /**
-     * Prints on serial port the given text.
-     */
-    void print(const char *text);
-    /**
-     * Prints on serial port the given text.
-     */
-    void println(const char *text);
-    /**
-     * Prints on serial port the given text and the number.
-     */
-    void println(const char *text, int number);
-
-    /**
      * Sweeps up the motor speed. Used by menuCommandSweepMotor()
      * 
      * param delay_between_changes_millis: time between a speed change in milliseconds.
      */
-    void sweepSpeedUpwards(int delay_between_changes_millis, MotorController *motor);
+    void sweepSpeedUpwards(int delay_between_changes_millis, motor_synth::MotorController *motor);
     /**
      * Sweeps down the motor speed. Used by menuCommandSweepMotor()
      * 
      * param delay_between_changes_millis: time between a speed change in milliseconds.
      */
-    void sweepSpeedDownwards(int delay_between_changes_millis, MotorController *motor);
+    void sweepSpeedDownwards(int delay_between_changes_millis, motor_synth::MotorController *motor);
     /**
      * Makes the CLI wait by blinking the internal LED.
      */
@@ -97,7 +95,7 @@ private:
     /**
      * Updates all the EEPROM motor data
      */
-    void updateEEPROMMotorData(MotorSynth * motorSynth);
+    void updateEEPROMMotorData(motor_synth::MotorSynth * motorSynth);
 };
 
 #endif
