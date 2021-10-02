@@ -26,6 +26,8 @@ test_native:  ## Lauinches tests for the native version
 test_native-verbose:  ## Lauinches tests for the native version (verbose output)
 	${PLATFORMIO} test -v --environment native
 
+debug_native_test:  ## Launches GDB for the native tests
+	${PLATFORMIO}  debug -e native --interface=gdb
 
 .PHONY: help
 help: ## show this help.
