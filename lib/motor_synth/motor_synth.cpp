@@ -303,7 +303,7 @@ namespace motor_synth
             this->serialIO->print("- ");
             this->serialIO->print(i, DEC);
             this->serialIO->print(" - ");
-            this->eventsStack[i].print();
+            this->eventsStack[i].print(this->serialIO);
         }
         this->serialIO->println("--------------------");
     }

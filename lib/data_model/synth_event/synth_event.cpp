@@ -1,113 +1,116 @@
 #include "synth_event.h"
 
-void SynthEvent::print()
+namespace motor_synth
+{
+
+void SynthEvent::print(motor_synth::SerialIO *serial)
 {
     switch (type)
     {
     case SynthEventType::NoteOff:
-        Serial.print("Note Off, ch=");
-        Serial.print(channel, DEC);
-        Serial.print(", note=");
-        Serial.print(data1, DEC);
-        Serial.print(", velocity=");
-        Serial.println(data2, DEC);
+        serial->print("Note Off, ch=");
+        serial->print(channel, DEC);
+        serial->print(", note=");
+        serial->print(data1, DEC);
+        serial->print(", velocity=");
+        serial->println(data2, DEC);
         break;
 
     case SynthEventType::NoteOn:
-        Serial.print("Note On, ch=");
-        Serial.print(channel, DEC);
-        Serial.print(", note=");
-        Serial.print(data1, DEC);
-        Serial.print(", velocity=");
-        Serial.println(data2, DEC);
+        serial->print("Note On, ch=");
+        serial->print(channel, DEC);
+        serial->print(", note=");
+        serial->print(data1, DEC);
+        serial->print(", velocity=");
+        serial->println(data2, DEC);
         break;
 
     case SynthEventType::AfterTouchPoly:
-        Serial.print("AfterTouch Change, ch=");
-        Serial.print(channel, DEC);
-        Serial.print(", note=");
-        Serial.print(data1, DEC);
-        Serial.print(", velocity=");
-        Serial.println(data2, DEC);
+        serial->print("AfterTouch Change, ch=");
+        serial->print(channel, DEC);
+        serial->print(", note=");
+        serial->print(data1, DEC);
+        serial->print(", velocity=");
+        serial->println(data2, DEC);
         break;
 
     case SynthEventType::ControlChange:
-        Serial.print("Control Change, ch=");
-        Serial.print(channel, DEC);
-        Serial.print(", control=");
-        Serial.print(data1, DEC);
-        Serial.print(", value=");
-        Serial.println(data2, DEC);
+        serial->print("Control Change, ch=");
+        serial->print(channel, DEC);
+        serial->print(", control=");
+        serial->print(data1, DEC);
+        serial->print(", value=");
+        serial->println(data2, DEC);
         break;
 
     case SynthEventType::ProgramChange:
-        Serial.print("Program Change, ch=");
-        Serial.print(channel, DEC);
-        Serial.print(", program=");
-        Serial.println(data1, DEC);
+        serial->print("Program Change, ch=");
+        serial->print(channel, DEC);
+        serial->print(", program=");
+        serial->println(data1, DEC);
         break;
 
     case SynthEventType::AfterTouchChannel:
-        Serial.print("After Touch, ch=");
-        Serial.print(channel, DEC);
-        Serial.print(", pressure=");
-        Serial.println(data1, DEC);
+        serial->print("After Touch, ch=");
+        serial->print(channel, DEC);
+        serial->print(", pressure=");
+        serial->println(data1, DEC);
         break;
 
     case SynthEventType::PitchBend:
-        Serial.print("Pitch Change, ch=");
-        Serial.print(channel, DEC);
-        Serial.print(", pitch=");
-        Serial.println(data1 + data2 * 128, DEC);
+        serial->print("Pitch Change, ch=");
+        serial->print(channel, DEC);
+        serial->print(", pitch=");
+        serial->println(data1 + data2 * 128, DEC);
         break;
 
     case SynthEventType::TimeCodeQuarterFrame:
-        Serial.print("TimeCode, index=");
-        Serial.print(data1 >> 4, DEC);
-        Serial.print(", digit=");
-        Serial.println(data1 & 15, DEC);
+        serial->print("TimeCode, index=");
+        serial->print(data1 >> 4, DEC);
+        serial->print(", digit=");
+        serial->println(data1 + data2 * 128, DEC);
         break;
 
     case SynthEventType::SongPosition:
-        Serial.print("Song Position, beat=");
-        Serial.println(data1 + data2 * 128);
+        serial->print("Song Position, beat=");
+        serial->println(data1 + data2 * 128, DEC);
         break;
 
     case SynthEventType::SongSelect:
-        Serial.print("Song Select, song=");
-        Serial.println(data1, DEC);
+        serial->print("Song Select, song=");
+        serial->println(data1, DEC);
         break;
 
     case SynthEventType::TuneRequest:
-        Serial.println("Tune Request");
+        serial->println("Tune Request");
         break;
 
     case SynthEventType::Clock:
-        //Serial.println("Clock");
+        //serial->println("Clock");
         break;
 
     case SynthEventType::Start:
-        Serial.println("Start");
+        serial->println("Start");
         break;
 
     case SynthEventType::Continue:
-        Serial.println("Continue");
+        serial->println("Continue");
         break;
 
     case SynthEventType::Stop:
-        Serial.println("Stop");
+        serial->println("Stop");
         break;
 
     case SynthEventType::ActiveSensing:
-        Serial.println("Active Sensing");
+        serial->println("Active Sensing");
         break;
 
     case SynthEventType::SystemReset:
-        Serial.println("System Reset");
+        serial->println("System Reset");
         break;
 
     default:
-        Serial.println("Unknown MIDI message type");
+        serial->println("Unknown MIDI message type");
     }
 }
 
@@ -212,3 +215,4 @@ int16_t SynthEvent::getPitchBend()
 {
     return (int16_t)(this->data1 + this->data2 * 128);
 }
+} // motor_synth

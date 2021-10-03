@@ -13,7 +13,7 @@ motor_synth::ArduinoSerialIODoNotPrint serial;
 CLI cli;
 Blink blink;                 // board's led controller
 SynthEEPROM synthEEPROM;     // permanent storage
-MidiInterface midiInterface; // MIDI I/O
+motor_synth::MidiInterface midiInterface; // MIDI I/O
 motor_synth::MotorSynth motorSynth; // Manages the notes stack and motor/s velocity state/s
 
 // For each motor, we have a ServoMotorController and a control pin number

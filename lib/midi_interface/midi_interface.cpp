@@ -6,9 +6,11 @@
 #include "FakeusbMIDI.h"
 #endif // NATIVE
 
+namespace motor_synth
+{
 
 // Helper that translates MIDI inputs to SynthEvent
-void processMIDI(SynthEvent * event);
+void processMIDI(motor_synth::SynthEvent * event);
 
 void MidiInterface::setup()
 {
@@ -16,7 +18,7 @@ void MidiInterface::setup()
     Serial.println("Setting up MidiInterface");
 }
 
-int MidiInterface::getSynthEvent(SynthEvent *event)
+int MidiInterface::getSynthEvent(motor_synth::SynthEvent *event)
 {
     int res = -1;
     if (usbMIDI.read())
@@ -27,7 +29,7 @@ int MidiInterface::getSynthEvent(SynthEvent *event)
     return res;
 }
 
-void processMIDI(SynthEvent *event)
+void processMIDI(motor_synth::SynthEvent *event)
 {
     event->setChannel(usbMIDI.getChannel()); // which MIDI channel, 1-16
     event->setData1(usbMIDI.getData1());     // first data byte of message, 0-127
@@ -37,74 +39,75 @@ void processMIDI(SynthEvent *event)
     switch (type)
     {
     case usbMIDI.NoteOff:
-        event->setType(SynthEventType::NoteOff);
+        event->setType(motor_synth::SynthEventType::NoteOff);
         break;
 
     case usbMIDI.NoteOn:
-        event->setType(SynthEventType::NoteOn);
+        event->setType(motor_synth::SynthEventType::NoteOn);
         break;
 
     case usbMIDI.AfterTouchPoly:
-        event->setType(SynthEventType::AfterTouchPoly);
+        event->setType(motor_synth::SynthEventType::AfterTouchPoly);
         break;
 
     case usbMIDI.ControlChange:
-        event->setType(SynthEventType::ControlChange);
+        event->setType(motor_synth::SynthEventType::ControlChange);
         break;
 
     case usbMIDI.ProgramChange:
-        event->setType(SynthEventType::ProgramChange);
+        event->setType(motor_synth::SynthEventType::ProgramChange);
         break;
 
     case usbMIDI.AfterTouchChannel:
-        event->setType(SynthEventType::AfterTouchChannel);
+        event->setType(motor_synth::SynthEventType::AfterTouchChannel);
         break;
 
     case usbMIDI.PitchBend:
-        event->setType(SynthEventType::PitchBend);
+        event->setType(motor_synth::SynthEventType::PitchBend);
         break;
 
     case usbMIDI.TimeCodeQuarterFrame:
-        event->setType(SynthEventType::TimeCodeQuarterFrame);
+        event->setType(motor_synth::SynthEventType::TimeCodeQuarterFrame);
         break;
 
     case usbMIDI.SongPosition:
-        event->setType(SynthEventType::SongPosition);
+        event->setType(motor_synth::SynthEventType::SongPosition);
         break;
 
     case usbMIDI.SongSelect:
-        event->setType(SynthEventType::SongSelect);
+        event->setType(motor_synth::SynthEventType::SongSelect);
         break;
 
     case usbMIDI.TuneRequest:
-        event->setType(SynthEventType::TuneRequest);
+        event->setType(motor_synth::SynthEventType::TuneRequest);
         break;
 
     case usbMIDI.Clock:
-        event->setType(SynthEventType::Clock);
+        event->setType(motor_synth::SynthEventType::Clock);
         break;
 
     case usbMIDI.Start:
-        event->setType(SynthEventType::Start);
+        event->setType(motor_synth::SynthEventType::Start);
         break;
 
     case usbMIDI.Continue:
-        event->setType(SynthEventType::Continue);
+        event->setType(motor_synth::SynthEventType::Continue);
         break;
 
     case usbMIDI.Stop:
-        event->setType(SynthEventType::Stop);
+        event->setType(motor_synth::SynthEventType::Stop);
         break;
 
     case usbMIDI.ActiveSensing:
-        event->setType(SynthEventType::ActiveSensing);
+        event->setType(motor_synth::SynthEventType::ActiveSensing);
         break;
 
     case usbMIDI.SystemReset:
-        event->setType(SynthEventType::SystemReset);
+        event->setType(motor_synth::SynthEventType::SystemReset);
         break;
 
     default:
-        event->setType(SynthEventType::InvalidType);
+        event->setType(motor_synth::SynthEventType::InvalidType);
     }
+}
 }

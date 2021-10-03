@@ -29,7 +29,7 @@ public:
      */
     void setup( Blink* blink, 
                 SynthEEPROM* synthEEPROM, 
-                MidiInterface* midiInterface, 
+                motor_synth::MidiInterface* midiInterface, 
                 motor_synth::SerialIO* serial,
                 motor_synth::MotorSynth* motorSynth);
     /**
@@ -56,7 +56,7 @@ public:
 private:
     Blink* blink = nullptr; // Board LED management
     SynthEEPROM* synthEEPROM = nullptr; // permanent storage
-    MidiInterface* midiInterface = nullptr;
+    motor_synth::MidiInterface* midiInterface = nullptr;
     motor_synth::SerialIO* serialIO = nullptr;
     motor_synth::MotorSynth* motorSynth = nullptr;
 

@@ -9,6 +9,9 @@
 
 #include "../data_model/synth_event/synth_event.h"
 
+namespace motor_synth
+{
+
 class MidiInterface
 {
 public:
@@ -25,9 +28,10 @@ public:
      * 
      * Returns a negative number if no event available. 
      */
-    int getSynthEvent(SynthEvent * event);
+    int getSynthEvent(motor_synth::SynthEvent * event);
 
 private:
 };
+} // motor_synth
 
 #endif

@@ -10,6 +10,10 @@
 #define _MOTOR_SYNTH_SYNTH_EVENT_H_
 
 #include <Arduino.h> // needed for "byte" definition
+#include "serial.h"
+
+namespace motor_synth
+{
 
 // Copied from usb_midi.h
 // Message type names for compatibility with Arduino MIDI library 4.3.1
@@ -42,7 +46,7 @@ public:
     /**
      * Prints on serial port a string representation of the event.
      */
-    void print();
+    void print(motor_synth::SerialIO *serial);
     /**
      * Copyes the contents of this event into the given event.
      * 
@@ -83,5 +87,6 @@ private:
     byte data1 = 0;
     byte data2 = 0;
 };
+} // namespace motor_synth
 
 #endif

@@ -1,8 +1,4 @@
-#include <ArduinoFake.h>
 #include <unity.h>
-
-using namespace fakeit;
-
 
 void test_function_simple_test(void) {
     TEST_ASSERT_EQUAL(32, 30 + 2);
