@@ -132,7 +132,7 @@ void test_03_notes_on_repeat_note(void) {
     // Then (note is moved to the top)
     motorSynth.printStack();
     int expected_stack_len = 3;
-    int expected_notes_order[3] = {0, 2, 1};
+    int expected_notes_order[3] = {1, 3, 2};
     
     TEST_ASSERT_EQUAL_INT(expected_stack_len -1 , motorSynth.get_eventsStackIndex());
     for (int i = 0; i < 3; i++){

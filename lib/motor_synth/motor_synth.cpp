@@ -188,11 +188,17 @@ namespace motor_synth
 
     void MotorSynth::processEvent(SynthEvent *event)
     {
+        updateStackWithNewEvent(event);
+        applyStackToMotors();
+    }
+
+    void MotorSynth::updateStackWithNewEvent(SynthEvent *event)
+    {
         switch (event->getType())
         {
         case SynthEventType::NoteOn:
-            // First of all, we play the note
-            this->motors[0].setSpeed(noteToVelocity[event->getNote()]);
+            // In case we receive two NoteON with no NoteOff
+            removeNoteOnEventInStack(event);
             // Now, we add the note to the stack
             if (this->eventsStackIndex >= this->events_stack_size - 1)
             {
@@ -206,22 +212,25 @@ namespace motor_synth
 
         case SynthEventType::NoteOff:
             // This noteOff could be any of the notes in the stack (or maybe it is not in the stack),
-            // we need to remove the respective noteOn in the stack and play the more recent note.
+            // we need to remove the respective noteOn in the stack.
             removeNoteOnEventInStack(event);
-            // Now, we play the more recent note in the stack
-            if (this->eventsStackIndex < 0)
-            {
-                // No notes in the stack
-                this->motors[0].setSpeed(DRONE_VELOCITY);
-            }
-            else
-            {
-                this->motors[0].setSpeed(noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
-            }
             break;
 
         default:
             break;
+        }
+    }
+
+    void MotorSynth::applyStackToMotors()
+    {
+        if (this->eventsStackIndex < 0)
+        {
+            // No notes in the stack
+            this->motors[0].setSpeed(DRONE_VELOCITY);
+        }
+        else
+        {
+            this->motors[0].setSpeed(noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
         }
     }
 
