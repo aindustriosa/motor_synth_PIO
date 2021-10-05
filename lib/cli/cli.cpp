@@ -113,7 +113,7 @@ int CLI::getSerialPositiveValue()
 void CLI::menuCommandChangeMotorOnUserSerialInput()
 {
   this->serialIO->println("Changing motor speed using this serial port:\nEnter a number to change the speed");
-  this->serialIO->println("Values from 0 to ", this->motorSynth->motors[0].getMaxSpeed());
+  this->serialIO->println("Values from 0 to ", this->motorSynth->motors[0]->getMaxSpeed());
   this->serialIO->println("Reset the board to go back to the main menu.");
 
   while (1)
@@ -124,7 +124,7 @@ void CLI::menuCommandChangeMotorOnUserSerialInput()
       value = getSerialPositiveValue();
     }
 
-    this->motorSynth->motors[0].setSpeed(value);
+    this->motorSynth->motors[0]->setSpeed(value);
     this->serialIO->println("Speed:", value);
     this->blink->toggle();
   }
@@ -152,8 +152,8 @@ void CLI::menuCommandSweepMotor()
 
   while (1)
   {
-    sweepSpeedUpwards(delay_between_changes_millis, &(this->motorSynth->motors[0]));
-    sweepSpeedDownwards(delay_between_changes_millis, &(this->motorSynth->motors[0]));
+    sweepSpeedUpwards(delay_between_changes_millis, this->motorSynth->motors[0]);
+    sweepSpeedDownwards(delay_between_changes_millis, this->motorSynth->motors[0]);
   }
 }
 

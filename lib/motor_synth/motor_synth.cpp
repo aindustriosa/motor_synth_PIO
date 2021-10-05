@@ -6,7 +6,7 @@ namespace motor_synth
 {
     void MotorSynth::update_note_to_velocity()
     {
-        int max_speed = this->motors[0].getMaxSpeed();
+        int max_speed = this->motors[0]->getMaxSpeed();
         for (int i = 0; i < NOTE_TO_VELOCITY_SIZE; i++)
         {
             noteToVelocity[i] = map(
@@ -153,7 +153,7 @@ namespace motor_synth
     }
 
     void MotorSynth::setup(
-        motor_synth::MotorController *motors,
+        motor_synth::MotorController **motors,
         int motors_len,
         motor_synth::SerialIO *serial)
     {
@@ -166,7 +166,7 @@ namespace motor_synth
     }
 
     void MotorSynth::setup(
-        motor_synth::MotorController *motors,
+        motor_synth::MotorController **motors,
         int motors_len,
         int events_stack_size,
         motor_synth::SerialIO *serial)
@@ -223,20 +223,26 @@ namespace motor_synth
 
     void MotorSynth::applyStackToMotors()
     {
-        if (this->eventsStackIndex < 0)
+        if (this->eventsStackIndex < 0) // No notes in the stack
         {
-            // No notes in the stack
-            this->motors[0].setSpeed(DRONE_VELOCITY);
+            for (int i = 0; i < this->motors_len; i++)
+            {
+                this->motors[i]->setSpeed(DRONE_VELOCITY);
+            }
         }
         else
         {
-            this->motors[0].setSpeed(noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
+            for (int i = 0; i < this->motors_len; i++)
+            {
+                this->motors[i]->setSpeed(
+                    noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
+            }
         }
     }
 
     void MotorSynth::updateSound()
     {
-        this->motors[0].setSpeed(noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
+        this->motors[0]->setSpeed(noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
     }
 
     void MotorSynth::removeOldestEventInStack()

@@ -13,15 +13,15 @@ namespace motor_synth
    class MotorSynth
    {
    public:
-      motor_synth::MotorController *motors = nullptr;
+      motor_synth::MotorController **motors;
       int motors_len = 0;
 
       void setup(
-          motor_synth::MotorController *motors,
+          motor_synth::MotorController **motors,
           int motors_len,
           motor_synth::SerialIO *serial);
       void setup(
-          motor_synth::MotorController *motors,
+          motor_synth::MotorController **motors,
           int motors_len,
           int events_stack_size,
           motor_synth::SerialIO *serial);

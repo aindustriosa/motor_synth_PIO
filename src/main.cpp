@@ -10,16 +10,18 @@ motor_synth::ArduinoSerialIO serial;
 motor_synth::ArduinoSerialIODoNotPrint serial;
 #endif
 
-CLI cli;
+CLI global_cli;
 Blink blink;                 // board's led controller
 SynthEEPROM synthEEPROM;     // permanent storage
 motor_synth::MidiInterface midiInterface; // MIDI I/O
 motor_synth::MotorSynth motorSynth; // Manages the notes stack and motor/s velocity state/s
 
 // For each motor, we have a ServoMotorController and a control pin number
-#define NUMBER_OF_MOTORS 1
-motor_synth::ServoMotorController motors[NUMBER_OF_MOTORS];
-int motor_control_pins[NUMBER_OF_MOTORS] = {9};
+#define NUMBER_OF_MOTORS 4
+motor_synth::ServoMotorController *motors[NUMBER_OF_MOTORS];
+// Pins possitions: https://www.pjrc.com/store/teensy32.html
+// Available pins: https://www.pjrc.com/teensy/td_libs_Servo.html
+int motor_control_pins[NUMBER_OF_MOTORS] = {9, 10, 3, 4};
 
 
 void setup()
@@ -31,10 +33,12 @@ void setup()
   midiInterface.setup();
   for (int i = 0; i < NUMBER_OF_MOTORS; i++)
   {
-    motors[i].setup(motor_control_pins[i]);
+    motor_synth::ServoMotorController* motor = new motor_synth::ServoMotorController();
+    motors[i] = motor;
+    motors[i]->setup(motor_control_pins[i]);
   }
-  motorSynth.setup(motors, NUMBER_OF_MOTORS, &serial);
-  cli.setup(&blink, &synthEEPROM, &midiInterface, &serial, &motorSynth);
+  motorSynth.setup((motor_synth::MotorController**)motors, NUMBER_OF_MOTORS, &serial);
+  global_cli.setup(&blink, &synthEEPROM, &midiInterface, &serial, &motorSynth);
 }
 
 void loop()
@@ -45,5 +49,5 @@ void loop()
   //cli.loop_serial();
 
   // Or run an specific application:
-  cli.menuCommandMonophonicSynthTunning();
+  global_cli.menuCommandMonophonicSynthTunning();
 }
