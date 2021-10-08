@@ -161,6 +161,7 @@ namespace motor_synth
         this->motors_len = motors_len;
         this->events_stack_size = EVENTS_STACK_MAX_SIZE;
         this->serialIO = serial;
+        this->createEventPerMotor();
         // update_note_to_velocity();
         this->serialIO->println("MotorSynth setup completed");
     }
@@ -182,8 +183,22 @@ namespace motor_synth
         {
             this->events_stack_size = events_stack_size;
         }
+        this->createEventPerMotor();
         //update_note_to_velocity();
         this->serialIO->println("MotorSynth setup completed");
+    }
+
+    void  MotorSynth::createEventPerMotor()
+    {
+        this->eventPerMotor = new SynthEvent[this->motors_len];
+        for (int i = 0; i < this->motors_len; i++) {
+            this->eventPerMotor[i].setType(SynthEventType::InvalidType);
+        }
+    }
+
+    void MotorSynth::destroyEventPerMotor()
+    {
+        delete[] this->eventPerMotor;
     }
 
     void MotorSynth::processEvent(SynthEvent *event)
@@ -225,17 +240,27 @@ namespace motor_synth
     {
         if (this->eventsStackIndex < 0) // No notes in the stack
         {
-            for (int i = 0; i < this->motors_len; i++)
+            for (int motor_index = 0; motor_index < this->motors_len; motor_index++)
             {
-                this->motors[i]->setSpeed(DRONE_VELOCITY);
+                this->motors[motor_index]->setSpeed(DRONE_VELOCITY);
+                this->eventPerMotor[motor_index].setType(SynthEventType::InvalidType);
             }
         }
         else
         {
-            for (int i = 0; i < this->motors_len; i++)
+            for (int motor_index = 0; motor_index < this->motors_len; motor_index++)
             {
-                this->motors[i]->setSpeed(
+                this->motors[motor_index]->setSpeed(
                     noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
+                this->eventsStack[this->eventsStackIndex].copyInto(
+                    &(this->eventPerMotor[motor_index]));
+                    /*
+                this->eventPerMotor[motor_index].setType(
+                    this->eventsStack[this->eventsStackIndex].getType());
+                this->eventPerMotor[motor_index].setNote(
+                    this->eventsStack[this->eventsStackIndex].getNote());
+                this->eventPerMotor[motor_index].setNoteVelocity(
+                    this->eventsStack[this->eventsStackIndex].getNoteVelocity());*/
             }
         }
     }

@@ -7,20 +7,24 @@ using namespace fakeit;
 #include "motor_synth.h"
 #include "mock_serial_io.h"
 #include "mock_motor_controller.h"
+#include "synth_event/synth_event.h"
 
 #define MAX_NUM_MOTORS 4
-int control_pins[MAX_NUM_MOTORS] = {1,2,3,4};
+int control_pins[MAX_NUM_MOTORS] = {1, 2, 3, 4};
 motor_synth::MockMotorController *motors[MAX_NUM_MOTORS];
 
 motor_synth::MockSerialIO serial = motor_synth::MockSerialIO();
 
-void setup_motors(int number_of_motors) {
-    if (number_of_motors > MAX_NUM_MOTORS) {
+void setup_motors(int number_of_motors)
+{
+    if (number_of_motors > MAX_NUM_MOTORS)
+    {
         throw "Trying to setup more than MAX_NUM_MOTORS!";
     }
 
-    for (int i = 0; i < number_of_motors; i++) {
-        motor_synth::MockMotorController* motor = new motor_synth::MockMotorController();
+    for (int i = 0; i < number_of_motors; i++)
+    {
+        motor_synth::MockMotorController *motor = new motor_synth::MockMotorController();
         motors[i] = motor;
         motors[i]->setup(control_pins[i]);
         motors[i]->setSpeed_lastSpeed = 0;
@@ -28,23 +32,40 @@ void setup_motors(int number_of_motors) {
     }
 }
 
-void teardown_motors(int number_of_motors) {
-    if (number_of_motors > MAX_NUM_MOTORS) {
+void teardown_motors(int number_of_motors)
+{
+    if (number_of_motors > MAX_NUM_MOTORS)
+    {
         throw "Trying to delete more than MAX_NUM_MOTORS!";
     }
 
-    for (int i = 0; i < number_of_motors; i++) {
+    for (int i = 0; i < number_of_motors; i++)
+    {
         delete motors[i];
     }
 }
 
-void set_note_on(int note, motor_synth::SynthEvent * event) {
+void set_note_on(int note, motor_synth::SynthEvent *event)
+{
     event->setChannel(1);
     event->setType(motor_synth::SynthEventType::NoteOn);
     event->setNote(note);
     event->setNoteVelocity(80);
 }
 
+void printEventPerMotor(motor_synth::MotorSynth *motorSynth,
+                        motor_synth::MockSerialIO *serial)
+{
+    serial->println("--- Current events per motor ---");
+    for (int motor_index = 0; motor_index < motorSynth->motors_len; motor_index++)
+    {
+        serial->print("- ");
+        serial->print(motor_index, DEC);
+        serial->print(" - ");
+        motorSynth->getEventPerMotor()[motor_index].print(serial);
+    }
+    serial->println("--- --------- ---");
+}
 
 /**
  * GIVEN: A MotorSynth with one motor configured.
@@ -53,24 +74,28 @@ void set_note_on(int note, motor_synth::SynthEvent * event) {
  * 
  * THEN: Stack is empty
  */
-void test_01_MotorSynth_setup_does_not_alter_stack(void) {
+void test_01_MotorSynth_setup_does_not_alter_stack(void)
+{
     // Init
     const int number_of_motors = 1;
     setup_motors(number_of_motors);
 
     motor_synth::MotorSynth motorSynth;
-    motorSynth.setup((motor_synth::MotorController**)motors, number_of_motors, &serial);
+    motorSynth.setup((motor_synth::MotorController **)motors, number_of_motors, &serial);
 
     // When
-    motorSynth.printStack();
 
     // Then
+    motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
     TEST_ASSERT_EQUAL(-1, motorSynth.get_eventsStackIndex());
+    TEST_ASSERT_EQUAL(
+        motor_synth::SynthEventType::InvalidType,
+        motorSynth.getEventPerMotor()[0].getType());
 
     // Teardown
     teardown_motors(number_of_motors);
 }
-
 
 /**
  * GIVEN: A MotorSynth with one motor configured.
@@ -79,7 +104,8 @@ void test_01_MotorSynth_setup_does_not_alter_stack(void) {
  * 
  * THEN: Each note increases the stack until the top is reached, then old notes are removed.
  */
-void test_02_notes_on_update_stack(void) {
+void test_02_notes_on_update_stack(void)
+{
     // Init
     const int number_of_motors = 1;
     const int stack_len = 4;
@@ -89,7 +115,11 @@ void test_02_notes_on_update_stack(void) {
     setup_motors(number_of_motors);
 
     motor_synth::MotorSynth motorSynth;
-    motorSynth.setup((motor_synth::MotorController**)motors, number_of_motors, stack_len, &serial);
+    motorSynth.setup(
+        (motor_synth::MotorController **)motors,
+        number_of_motors,
+        stack_len,
+        &serial);
 
     // When (no note)
 
@@ -97,16 +127,29 @@ void test_02_notes_on_update_stack(void) {
     TEST_ASSERT_EQUAL_INT(-1, motorSynth.get_eventsStackIndex());
 
     // (fill the stack)
-    for (int i = 0; i < stack_len; i ++){
+    for (int stack_index = 0; stack_index < stack_len; stack_index++)
+    {
         // When
-        set_note_on(unique_notes[i], &event);
+        set_note_on(unique_notes[stack_index], &event);
         motorSynth.processEvent(&event);
 
         // Then
         motorSynth.printStack();
-        TEST_ASSERT_EQUAL_INT(i, motorSynth.get_eventsStackIndex());
-        TEST_ASSERT_EQUAL(motorSynth.get_eventsStack()[i].getNote(), unique_notes[i]);
-        TEST_ASSERT_EQUAL(motorSynth.get_eventsStack()[i].getType(), motor_synth::SynthEventType::NoteOn);
+        printEventPerMotor(&motorSynth, &serial);
+
+        TEST_ASSERT_EQUAL_INT(stack_index, motorSynth.get_eventsStackIndex());
+        TEST_ASSERT_EQUAL(
+            unique_notes[stack_index],
+            motorSynth.get_eventsStack()[stack_index].getNote());
+        TEST_ASSERT_EQUAL(
+            motor_synth::SynthEventType::NoteOn,
+            motorSynth.get_eventsStack()[stack_index].getType());
+        TEST_ASSERT_EQUAL(
+            motor_synth::SynthEventType::NoteOn,
+            motorSynth.getEventPerMotor()[0].getType());
+        TEST_ASSERT_EQUAL(
+            unique_notes[stack_index],
+            motorSynth.getEventPerMotor()[0].getNote());
     }
 
     // When (add new note to a filled stack)
@@ -115,10 +158,26 @@ void test_02_notes_on_update_stack(void) {
 
     // Then (stack is shifted)
     motorSynth.printStack();
-    TEST_ASSERT_EQUAL_INT(stack_len -1 , motorSynth.get_eventsStackIndex());
-    for (int i = 0; i < stack_len; i ++){
-        TEST_ASSERT_EQUAL(motorSynth.get_eventsStack()[i].getNote(), unique_notes[i+1]);
-        TEST_ASSERT_EQUAL(motorSynth.get_eventsStack()[i].getType(), motor_synth::SynthEventType::NoteOn);
+    printEventPerMotor(&motorSynth, &serial);
+
+    TEST_ASSERT_EQUAL_INT(stack_len - 1, motorSynth.get_eventsStackIndex());
+    for (int stack_index = 0; stack_index < stack_len; stack_index++)
+    {
+        TEST_ASSERT_EQUAL(
+            motorSynth.get_eventsStack()[stack_index].getNote(),
+            unique_notes[stack_index + 1]);
+        TEST_ASSERT_EQUAL(
+            motorSynth.get_eventsStack()[stack_index].getType(),
+            motor_synth::SynthEventType::NoteOn);
+    }
+    for (int motor_number = 0; motor_number < number_of_motors; motor_number++)
+    {
+        TEST_ASSERT_EQUAL(
+            motor_synth::SynthEventType::NoteOn,
+            motorSynth.getEventPerMotor()[motor_number].getType());
+        TEST_ASSERT_EQUAL(
+            unique_notes[stack_len],
+            motorSynth.getEventPerMotor()[motor_number].getNote());
     }
 
     // Teardown
@@ -132,7 +191,8 @@ void test_02_notes_on_update_stack(void) {
  * 
  * THEN: The note is moved to the top, not duplicated.
  */
-void test_03_notes_on_repeat_note(void) {
+void test_03_notes_on_repeat_note(void)
+{
     // Init
     const int number_of_motors = 1;
     const int stack_len = 4;
@@ -142,9 +202,10 @@ void test_03_notes_on_repeat_note(void) {
     setup_motors(number_of_motors);
 
     motor_synth::MotorSynth motorSynth;
-    motorSynth.setup((motor_synth::MotorController**)motors, number_of_motors, stack_len, &serial);
+    motorSynth.setup((motor_synth::MotorController **)motors, number_of_motors, stack_len, &serial);
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         set_note_on(unique_notes[i], &event);
         motorSynth.processEvent(&event);
     }
@@ -155,19 +216,22 @@ void test_03_notes_on_repeat_note(void) {
 
     // Then (note is moved to the top)
     motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
+
     int expected_stack_len = 3;
     int expected_notes_order[3] = {1, 3, 2};
-    
-    TEST_ASSERT_EQUAL_INT(expected_stack_len -1 , motorSynth.get_eventsStackIndex());
-    for (int i = 0; i < 3; i++){
-        TEST_ASSERT_EQUAL(expected_notes_order[i],
-                          motorSynth.get_eventsStack()[i].getNote());
+
+    TEST_ASSERT_EQUAL_INT(expected_stack_len - 1, motorSynth.get_eventsStackIndex());
+    for (int i = 0; i < 3; i++)
+    {
+        TEST_ASSERT_EQUAL(
+            expected_notes_order[i],
+            motorSynth.get_eventsStack()[i].getNote());
     }
 
     // Teardown
     teardown_motors(number_of_motors);
 }
-
 
 /**
  * GIVEN: A MotorSynth with 4 motors configured.
@@ -176,7 +240,8 @@ void test_03_notes_on_repeat_note(void) {
  * 
  * THEN: Motor speeds are updated accordingly.
  */
-void test_04_notes_on_update_stack(void) {
+void test_04_notes_on_update_stack(void)
+{
     // Init
     const int number_of_motors = 4;
     const int stack_len = 6;
@@ -187,11 +252,12 @@ void test_04_notes_on_update_stack(void) {
     setup_motors(number_of_motors);
 
     motor_synth::MotorSynth motorSynth;
-    motorSynth.setup((motor_synth::MotorController**) motors, 
-                     number_of_motors, 
-                     stack_len, 
-                     &serial);
-    
+    motorSynth.setup(
+        (motor_synth::MotorController **)motors,
+        number_of_motors,
+        stack_len,
+        &serial);
+
     // When
     int note_index = 0;
     set_note_on(unique_notes[note_index], &event);
@@ -199,18 +265,22 @@ void test_04_notes_on_update_stack(void) {
 
     // Then (unison implementation: all motors with same speed)
     motorSynth.printStack();
-    for (int i = 0; i < number_of_motors; i++) {
-        TEST_ASSERT_EQUAL_INT(1, motors[i]->setSpeed_timesCalled);
+    printEventPerMotor(&motorSynth, &serial);
+
+    for (int motor_index = 0; motor_index < number_of_motors; motor_index++)
+    {
+        TEST_ASSERT_EQUAL_INT(1, motors[motor_index]->setSpeed_timesCalled);
         TEST_ASSERT_EQUAL_INT(
             motorSynth.getNoteVelocity(unique_notes[note_index]),
-            motors[i]->setSpeed_lastSpeed);
+            motors[motor_index]->setSpeed_lastSpeed);
     }
-    
+
     // Teardown
     teardown_motors(number_of_motors);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 
     UNITY_BEGIN();
     RUN_TEST(test_01_MotorSynth_setup_does_not_alter_stack);
@@ -221,4 +291,3 @@ int main(int argc, char **argv) {
 
     return 0;
 }
-
