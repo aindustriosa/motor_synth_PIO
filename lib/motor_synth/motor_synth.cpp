@@ -254,20 +254,13 @@ namespace motor_synth
                     noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
                 this->eventsStack[this->eventsStackIndex].copyInto(
                     &(this->eventPerMotor[motor_index]));
-                    /*
-                this->eventPerMotor[motor_index].setType(
-                    this->eventsStack[this->eventsStackIndex].getType());
-                this->eventPerMotor[motor_index].setNote(
-                    this->eventsStack[this->eventsStackIndex].getNote());
-                this->eventPerMotor[motor_index].setNoteVelocity(
-                    this->eventsStack[this->eventsStackIndex].getNoteVelocity());*/
             }
         }
     }
 
     void MotorSynth::updateSound()
     {
-        this->motors[0]->setSpeed(noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
+        this->applyStackToMotors();
     }
 
     void MotorSynth::removeOldestEventInStack()

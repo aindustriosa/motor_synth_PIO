@@ -53,6 +53,14 @@ void set_note_on(int note, motor_synth::SynthEvent *event)
     event->setNoteVelocity(80);
 }
 
+void set_note_off(int note, motor_synth::SynthEvent *event)
+{
+    event->setChannel(1);
+    event->setType(motor_synth::SynthEventType::NoteOff);
+    event->setNote(note);
+    event->setNoteVelocity(80);
+}
+
 void printEventPerMotor(motor_synth::MotorSynth *motorSynth,
                         motor_synth::MockSerialIO *serial)
 {
@@ -202,7 +210,8 @@ void test_03_notes_on_repeat_note(void)
     setup_motors(number_of_motors);
 
     motor_synth::MotorSynth motorSynth;
-    motorSynth.setup((motor_synth::MotorController **)motors, number_of_motors, stack_len, &serial);
+    motorSynth.setup(
+        (motor_synth::MotorController **)motors, number_of_motors, stack_len, &serial);
 
     for (int i = 0; i < 3; i++)
     {
@@ -279,14 +288,96 @@ void test_04_notes_on_update_stack(void)
     teardown_motors(number_of_motors);
 }
 
+/**
+ * GIVEN: A MotorSynth with 4 motors configured. A series of NoteOn are processed.
+ * 
+ * WHEN: A series of NoteOff are processed.
+ * 
+ * THEN: Motor speeds are updated accordingly.
+ */
+void test_05_notes_off_update_stack(void)
+{
+    // Init
+    const int number_of_motors = 4;
+    const int stack_len = 6;
+    int unique_notes[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    motor_synth::SynthEvent event = motor_synth::SynthEvent();
+
+    serial.println("setup motors:");
+    setup_motors(number_of_motors);
+
+    motor_synth::MotorSynth motorSynth;
+    motorSynth.setup(
+        (motor_synth::MotorController **)motors,
+        number_of_motors,
+        stack_len,
+        &serial);
+
+    int note_indexes[3] = {0, 1, 2};
+    for (int note_index = 0; note_index < 3; note_index++) {
+        set_note_on(unique_notes[note_index], &event);
+        motorSynth.processEvent(&event);
+    }
+    motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
+
+    // When
+    set_note_off(unique_notes[2], &event);
+    motorSynth.processEvent(&event);
+
+    // Then (unison implementation: all motors with same speed)
+    motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
+
+    for (int motor_index = 0; motor_index < number_of_motors; motor_index++)
+    {
+        TEST_ASSERT_EQUAL_INT(
+            motorSynth.getNoteVelocity(unique_notes[1]),
+            motors[motor_index]->setSpeed_lastSpeed);
+    }
+
+    // When
+    set_note_off(unique_notes[1], &event);
+    motorSynth.processEvent(&event);
+
+    // Then (unison implementation: all motors with same speed)
+    motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
+
+    for (int motor_index = 0; motor_index < number_of_motors; motor_index++)
+    {
+        TEST_ASSERT_EQUAL_INT(
+            motorSynth.getNoteVelocity(unique_notes[0]),
+            motors[motor_index]->setSpeed_lastSpeed);
+    }
+
+    // When
+    set_note_off(unique_notes[0], &event);
+    motorSynth.processEvent(&event);
+
+    // Then (unison implementation: all motors with same speed)
+    motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
+
+    for (int motor_index = 0; motor_index < number_of_motors; motor_index++)
+    {
+        TEST_ASSERT_EQUAL_INT(
+            DRONE_VELOCITY,
+            motors[motor_index]->setSpeed_lastSpeed);
+    }
+
+    // Teardown
+    teardown_motors(number_of_motors);
+}
+
 int main(int argc, char **argv)
 {
-
     UNITY_BEGIN();
     RUN_TEST(test_01_MotorSynth_setup_does_not_alter_stack);
     RUN_TEST(test_02_notes_on_update_stack);
     RUN_TEST(test_03_notes_on_repeat_note);
     RUN_TEST(test_04_notes_on_update_stack);
+    RUN_TEST(test_05_notes_off_update_stack);
     UNITY_END();
 
     return 0;
