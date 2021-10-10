@@ -78,6 +78,7 @@ namespace motor_synth
         SynthEvent *get_eventsStack() { return eventsStack; }
         int get_eventsStackIndex() { return eventsStackIndex; }
         SynthEvent *getEventPerMotor() { return this->eventPerMotor; }
+        int getEventsStackIndex() { return this->eventsStackIndex; }
 
         ~MotorSynth() { destroyEventPerMotor(); }
 
@@ -89,7 +90,7 @@ namespace motor_synth
         // Notes pressed and not released yet.
         SynthEvent eventsStack[EVENTS_STACK_MAX_SIZE];
 
-        // The Synth only plays the note in this index. If -1 there are no notes in the stack.
+        // Top of the notes stack index. If -1 there are no notes in the stack.
         int eventsStackIndex = -1;
 
         // The event (note) that each motor is playing currently. If the event type is not
