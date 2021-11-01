@@ -188,10 +188,11 @@ namespace motor_synth
         this->serialIO->println("MotorSynth setup completed");
     }
 
-    void  MotorSynth::createEventPerMotor()
+    void MotorSynth::createEventPerMotor()
     {
         this->eventPerMotor = new SynthEvent[this->motors_len];
-        for (int i = 0; i < this->motors_len; i++) {
+        for (int i = 0; i < this->motors_len; i++)
+        {
             this->eventPerMotor[i].setType(SynthEventType::InvalidType);
         }
     }
@@ -248,14 +249,111 @@ namespace motor_synth
         }
         else
         {
-            for (int motor_index = 0; motor_index < this->motors_len; motor_index++)
+            if (this->isMonophonic)
             {
-                this->motors[motor_index]->setSpeed(
-                    noteToVelocity[this->eventsStack[this->eventsStackIndex].getNote()]);
-                this->eventsStack[this->eventsStackIndex].copyInto(
-                    &(this->eventPerMotor[motor_index]));
+                this->applyStackToMotorsMonophonic();
+            }
+            else
+            {
+                this->applyStackToMotorsPolyphonic();
             }
         }
+    }
+
+    // You can assume at least one note in the stack
+    void MotorSynth::applyStackToMotorsMonophonic()
+    {
+        for (int motor_index = 0; motor_index < this->motors_len; motor_index++)
+        {
+            this->applyEventToMotor(
+                &(this->eventsStack[this->eventsStackIndex]),
+                motor_index);
+        }
+    }
+
+    // You can assume at least one note in the stack
+    void MotorSynth::applyStackToMotorsPolyphonic()
+    {
+        // Stage 0; reset variables
+        this->clearNotesWaitingForMotor();
+        this->clearIsMotorAvailableForChange();
+
+        // Stage 1; update notesWaitingForMotorIndex and isMotorWellAssigned.
+        int maxAssignableEvents = motors_len; // We can manage as many different notes as motors we have
+        for (int i = this->eventsStackIndex; i >= 0; i--)
+        {
+            int motorPlayingThisNote = this->whichMotorIsPlayingThisNote(this->eventsStack + i);
+            if (motorPlayingThisNote == -1)
+            {
+                // No motor playing this note, we need to play it.
+                this->notesWaitingForMotorIndex = this->notesWaitingForMotorIndex + 1;
+                this->notesWaitingForMotor[this->notesWaitingForMotorIndex] = this->eventsStack + i;
+            }
+            else
+            {
+                // motor i is playing the note, this motor cannot change note
+                this->isMotorAvailableForChange[motorPlayingThisNote] = false;
+            }
+            maxAssignableEvents = maxAssignableEvents - 1;
+            if (maxAssignableEvents == 0)
+            {
+                break;
+            }
+        }
+
+        // Stage 2; apply the notes not played to the avaliable motors
+        for (int i_note = this->notesWaitingForMotorIndex; i_note >= 0; i_note--)
+        {
+            for (int i_motor = 0; i_motor < this->motors_len; i_motor++)
+            {
+                if (this->isMotorAvailableForChange[i_motor] == true)
+                {
+                    this->applyEventToMotor(this->eventsStack + i_note, i_motor);
+                    this->isMotorAvailableForChange[i_motor] = false;
+                }
+            }
+        }
+    }
+
+    void MotorSynth::clearNotesWaitingForMotor()
+    {
+        for (int i = 0; i < EVENTS_STACK_MAX_SIZE; i++)
+        {
+            this->notesWaitingForMotor[i] = NULL;
+        }
+        this->notesWaitingForMotorIndex = -1;
+    }
+
+    // Clear means that is available for change (is free to play a note)
+    void MotorSynth::clearIsMotorAvailableForChange()
+    {
+        for (int i = 0; i < MAX_NUMBER_MOTORS; i++)
+        {
+            this->isMotorAvailableForChange[i] = true;
+        }
+    }
+
+    int MotorSynth::whichMotorIsPlayingThisNote(SynthEvent *noteEvent)
+    {
+        int result = -1;
+        int objectiveVelocity = noteToVelocity[noteEvent->getNote()];
+
+        for (int i = 0; i < this->motors_len; i++)
+        {
+            if (this->motors[i]->getSpeed() == objectiveVelocity)
+            {
+                result = i;
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    void MotorSynth::applyEventToMotor(motor_synth::SynthEvent *event, int motor_index)
+    {
+        this->motors[motor_index]->setSpeed(this->noteToVelocity[event->getNote()]);
+        event->copyInto(&(this->eventPerMotor[motor_index]));
     }
 
     void MotorSynth::updateSound()

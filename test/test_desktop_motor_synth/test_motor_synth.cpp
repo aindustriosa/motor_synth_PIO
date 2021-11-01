@@ -259,13 +259,13 @@ void test_03_notes_on_repeat_note(void)
 }
 
 /**
- * GIVEN: A MotorSynth with 4 motors configured.
+ * GIVEN: A monophonic MotorSynth with 4 motors configured.
  * 
  * WHEN: A series of NoteOn are processed.
  * 
  * THEN: Motor speeds are updated accordingly.
  */
-void test_04_notes_on_update_stack(void)
+void test_04_notes_on_update_stack_monophonic(void)
 {
     // Init
     const int number_of_motors = 4;
@@ -283,6 +283,8 @@ void test_04_notes_on_update_stack(void)
         number_of_motors,
         stack_len,
         &serial);
+    
+    motorSynth.setIsMonophonic(true);
 
     for (int note_index = 0; note_index < number_of_notes; note_index++)
     {
@@ -310,13 +312,13 @@ void test_04_notes_on_update_stack(void)
 }
 
 /**
- * GIVEN: A MotorSynth with 4 motors configured. A series of NoteOn are processed.
+ * GIVEN: A monophonic MotorSynth with 4 motors configured. A series of NoteOn are processed.
  * 
  * WHEN: A series of NoteOff are processed.
  * 
  * THEN: Motor speeds are updated accordingly.
  */
-void test_05_notes_off_update_stack(void)
+void test_05_notes_off_update_stack_monophonic(void)
 {
     // Init
     const int number_of_motors = 4;
@@ -334,6 +336,7 @@ void test_05_notes_off_update_stack(void)
         number_of_motors,
         stack_len,
         &serial);
+    motorSynth.setIsMonophonic(true);
 
     for (int note_index = 0; note_index < number_of_notes; note_index++)
     {
@@ -348,7 +351,146 @@ void test_05_notes_off_update_stack(void)
     set_note_off(getStackEvent(&motorSynth, 0)->getNote(), &event);
     motorSynth.processEvent(&event);
 
-    // Then (unison implementation: all motors with next in the stack note speed)
+    // Then (unison/monophonic implementation: all motors with next in the stack note speed)
+    motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
+
+    for (int motor_index = 0; motor_index < number_of_motors; motor_index++)
+    {
+        TEST_ASSERT_EQUAL_INT(
+            motorSynth.getNoteVelocity(unique_notes[number_of_notes - 2]),
+            motors[motor_index]->setSpeed_lastSpeed);
+    }
+
+    // When remove next to top of the stack
+    set_note_off(getStackEvent(&motorSynth, 1)->getNote(), &event);
+    motorSynth.processEvent(&event);
+
+    // Then (unison implementation: all motors with same speed)
+    motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
+
+    for (int motor_index = 0; motor_index < number_of_motors; motor_index++)
+    {
+        TEST_ASSERT_EQUAL_INT(
+            motorSynth.getNoteVelocity(unique_notes[number_of_notes - 2]),
+            motors[motor_index]->setSpeed_lastSpeed);
+    }
+
+    // When remove next to next to top of the stack
+    set_note_off(getStackEvent(&motorSynth, 2)->getNote(), &event);
+    motorSynth.processEvent(&event);
+
+    // Then (unison implementation: all motors with same speed)
+    motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
+
+    for (int motor_index = 0; motor_index < number_of_motors; motor_index++)
+    {
+        TEST_ASSERT_EQUAL_INT(
+            motorSynth.getNoteVelocity(unique_notes[number_of_notes - 2]),
+            motors[motor_index]->setSpeed_lastSpeed);
+    }
+
+    // Teardown
+    teardown_motors(number_of_motors);
+}
+
+
+/**
+ * GIVEN: A polyphonic MotorSynth with 4 motors configured.
+ * 
+ * WHEN: A series of NoteOn are processed.
+ * 
+ * THEN: Motor speeds are updated accordingly.
+ */
+void test_06_notes_on_update_stack_polyphonic(void)
+{
+    // Init
+    const int number_of_motors = 4;
+    const int stack_len = 6;
+    const int number_of_notes = 10;
+    int unique_notes[number_of_notes] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    motor_synth::SynthEvent event = motor_synth::SynthEvent();
+
+    serial.println("setup motors:");
+    setup_motors(number_of_motors);
+
+    motor_synth::MotorSynth motorSynth;
+    motorSynth.setup(
+        (motor_synth::MotorController **)motors,
+        number_of_motors,
+        stack_len,
+        &serial);
+    
+    motorSynth.setIsMonophonic(false);
+
+    for (int note_index = 0; note_index < number_of_notes; note_index++)
+    {
+        // When
+        set_note_on(unique_notes[note_index], &event);
+        motorSynth.processEvent(&event);
+
+        // Then (unison implementation: all motors with same speed)
+        motorSynth.printStack();
+        printEventPerMotor(&motorSynth, &serial);
+
+        for (int motor_index = 0; motor_index < number_of_motors; motor_index++)
+        {
+            TEST_ASSERT_EQUAL_INT(
+                note_index + 1,
+                motors[motor_index]->setSpeed_timesCalled);
+            TEST_ASSERT_EQUAL_INT(
+                motorSynth.getNoteVelocity(unique_notes[note_index]),
+                motors[motor_index]->setSpeed_lastSpeed);
+        }
+    }
+
+    // Teardown
+    teardown_motors(number_of_motors);
+}
+
+/**
+ * GIVEN: A polyphonic MotorSynth with 4 motors configured. A series of NoteOn are processed.
+ * 
+ * WHEN: A series of NoteOff are processed.
+ * 
+ * THEN: Motor speeds are updated accordingly.
+ */
+void test_07_notes_off_update_stack_polyphonic(void)
+{
+    // Init
+    const int number_of_motors = 4;
+    const int stack_len = 6;
+    const int number_of_notes = 10;
+    int unique_notes[number_of_notes] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    motor_synth::SynthEvent event = motor_synth::SynthEvent();
+
+    serial.println("setup motors:");
+    setup_motors(number_of_motors);
+
+    motor_synth::MotorSynth motorSynth;
+    motorSynth.setup(
+        (motor_synth::MotorController **)motors,
+        number_of_motors,
+        stack_len,
+        &serial);
+    motorSynth.setIsMonophonic(false);
+
+    for (int note_index = 0; note_index < number_of_notes; note_index++)
+    {
+        set_note_on(unique_notes[note_index], &event);
+        motorSynth.processEvent(&event);
+    }
+
+    motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
+
+    // When remove top of the stack
+    set_note_off(getStackEvent(&motorSynth, 0)->getNote(), &event);
+    motorSynth.processEvent(&event);
+
+    // Then (unison/monophonic implementation: all motors with next in the stack note speed)
     motorSynth.printStack();
     printEventPerMotor(&motorSynth, &serial);
 
@@ -399,8 +541,10 @@ int main(int argc, char **argv)
     RUN_TEST(test_01_MotorSynth_setup_does_not_alter_stack);
     RUN_TEST(test_02_notes_on_update_stack);
     RUN_TEST(test_03_notes_on_repeat_note);
-    RUN_TEST(test_04_notes_on_update_stack);
-    RUN_TEST(test_05_notes_off_update_stack);
+    RUN_TEST(test_04_notes_on_update_stack_monophonic);
+    RUN_TEST(test_05_notes_off_update_stack_monophonic);
+    RUN_TEST(test_06_notes_on_update_stack_polyphonic);
+    RUN_TEST(test_07_notes_off_update_stack_polyphonic);
     UNITY_END();
 
     return 0;

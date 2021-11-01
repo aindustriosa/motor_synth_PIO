@@ -19,6 +19,7 @@ void ServoMotorController::setSpeed(int speed){
         value = servoMaxValue;
     }
     servo.writeMicroseconds(value);
+    this->currentSpeed = speed;
 }
 
 int ServoMotorController::getMaxSpeed(){

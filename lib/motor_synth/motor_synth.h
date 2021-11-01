@@ -15,6 +15,7 @@ namespace motor_synth
     public:
         motor_synth::MotorController **motors;
         int motors_len = 0;
+        static const int MAX_NUMBER_MOTORS = 8;
 
         void setup(
             motor_synth::MotorController **motors,
@@ -79,10 +80,12 @@ namespace motor_synth
         int get_eventsStackIndex() { return eventsStackIndex; }
         SynthEvent *getEventPerMotor() { return this->eventPerMotor; }
         int getEventsStackIndex() { return this->eventsStackIndex; }
+        void setIsMonophonic(bool isMonophonic) { this->isMonophonic = isMonophonic ;}
 
         ~MotorSynth() { destroyEventPerMotor(); }
 
     private:
+        bool isMonophonic = false;
         motor_synth::SerialIO *serialIO;
 
 #define EVENTS_STACK_MAX_SIZE 10
@@ -122,8 +125,36 @@ namespace motor_synth
          */
         void update_note_to_velocity();
 
+        void applyStackToMotorsMonophonic();
+        void applyStackToMotorsPolyphonic();
+        /**
+         * applyStackToMotorsPolyphonic uses some RAM for a couple of arrays.
+         * They are created here so they are not reserved at each call 
+         */
+        // Pointers to notes in the eventsStack that have to be played by a motor
+        // in this loop but aren't yet.
+        SynthEvent *notesWaitingForMotor[EVENTS_STACK_MAX_SIZE];
+        int notesWaitingForMotorIndex = -1;
+        // one boolean per motor. If true, the motor is currently playing a note
+        // that has to be played. If false, the motor is playing a note that has
+        // to be updated.
+        bool isMotorAvailableForChange[MAX_NUMBER_MOTORS];
+
+        // These methods are useful for polyphonic motor assignment algorithm
+        void clearNotesWaitingForMotor();
+        void clearIsMotorAvailableForChange();
+        /**
+         * Returns the index (in this->motors) of the motor playing the given note, -1 if 
+         * no motor is playing it. If more than one motor is playing it, it returns the 
+         * first one.
+         */
+        int whichMotorIsPlayingThisNote(SynthEvent* noteEvent);
+
+
+        void applyEventToMotor(motor_synth::SynthEvent * event, int motor_index);
+
 #define NOTE_TO_VELOCITY_SIZE 128
-#define DRONE_VELOCITY 120 // With 160 the motor spins
+#define DRONE_VELOCITY 0 // With 160 the motor spins
 
         int16_t noteToVelocity[NOTE_TO_VELOCITY_SIZE] = {
             0, 7, 15, 23, 31, 39, 46, 54, 62, 70,
