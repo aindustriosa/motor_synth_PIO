@@ -69,6 +69,8 @@ void printEventPerMotor(motor_synth::MotorSynth *motorSynth,
     {
         serial->print("- ");
         serial->print(motor_index, DEC);
+        serial->print(" - Current speed: ");
+        serial->print(motorSynth->motors[motor_index]->getSpeed(), DEC);
         serial->print(" - ");
         motorSynth->getEventPerMotor()[motor_index].print(serial);
     }
@@ -425,26 +427,151 @@ void test_06_notes_on_update_stack_polyphonic(void)
     
     motorSynth.setIsMonophonic(false);
 
-    for (int note_index = 0; note_index < number_of_notes; note_index++)
-    {
-        // When
-        set_note_on(unique_notes[note_index], &event);
-        motorSynth.processEvent(&event);
+    motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
 
-        // Then (unison implementation: all motors with same speed)
-        motorSynth.printStack();
-        printEventPerMotor(&motorSynth, &serial);
+    int note_index, motor_index;
+    // When first note is processed /////////////////////////////////////////////////
+    note_index = 0;
+    set_note_on(unique_notes[note_index], &event);
+    motorSynth.processEvent(&event);
 
-        for (int motor_index = 0; motor_index < number_of_motors; motor_index++)
-        {
-            TEST_ASSERT_EQUAL_INT(
-                note_index + 1,
-                motors[motor_index]->setSpeed_timesCalled);
-            TEST_ASSERT_EQUAL_INT(
-                motorSynth.getNoteVelocity(unique_notes[note_index]),
-                motors[motor_index]->setSpeed_lastSpeed);
-        }
+    // Then only first motor is playing
+    motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
+
+    motor_index = 0;
+    TEST_ASSERT_EQUAL_INT(1, motors[motor_index]->setSpeed_timesCalled);
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    for (int i = 1; i < number_of_motors; i++) {
+        TEST_ASSERT_EQUAL_INT(0, motors[i]->setSpeed_lastSpeed);
     }
+
+    // When second note is processed /////////////////////////////////////////////////
+    note_index = 1;
+    set_note_on(unique_notes[note_index], &event);
+    motorSynth.processEvent(&event);
+
+    // Then only first and second motors are playing
+    motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
+
+    motor_index = 0;
+    note_index = 0;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    motor_index = 1;
+    note_index = 1;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    for (int i = 2; i < number_of_motors; i++) {
+        TEST_ASSERT_EQUAL_INT(0, motors[i]->setSpeed_lastSpeed);
+    }
+
+    // When 3rd note is processed /////////////////////////////////////////////////
+    note_index = 2;
+    set_note_on(unique_notes[note_index], &event);
+    motorSynth.processEvent(&event);
+
+    // Then only first, second and third, motors are playing
+    motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
+
+    motor_index = 0;
+    note_index = 0;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    motor_index = 1;
+    note_index = 1;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+        
+    motor_index = 2;
+    note_index = 2;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    motor_index = 3;
+    TEST_ASSERT_EQUAL_INT(
+        0,
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    // When 4rd note is processed /////////////////////////////////////////////////
+    note_index = 3;
+    set_note_on(unique_notes[note_index], &event);
+    motorSynth.processEvent(&event);
+
+    // Then all motors are playing all the notes stack
+    motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
+
+    motor_index = 0;
+    note_index = 0;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    motor_index = 1;
+    note_index = 1;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+        
+    motor_index = 2;
+    note_index = 2;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    motor_index = 3;
+    note_index = 3;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+
+    // When 5rd note is processed /////////////////////////////////////////////////
+    note_index = 4;
+    set_note_on(unique_notes[note_index], &event);
+    motorSynth.processEvent(&event);
+
+    // Then all motors are playing all the notes stack but the older one
+    motorSynth.printStack();
+    printEventPerMotor(&motorSynth, &serial);
+
+    motor_index = 0;
+    note_index = 4;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    motor_index = 1;
+    note_index = 1;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+        
+    motor_index = 2;
+    note_index = 2;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    motor_index = 3;
+    note_index = 3;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
 
     // Teardown
     teardown_motors(number_of_motors);
@@ -462,8 +589,8 @@ void test_07_notes_off_update_stack_polyphonic(void)
     // Init
     const int number_of_motors = 4;
     const int stack_len = 6;
-    const int number_of_notes = 10;
-    int unique_notes[number_of_notes] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    const int number_of_notes = 6;
+    int unique_notes[number_of_notes] = {1, 2, 3, 4, 5, 6};
     motor_synth::SynthEvent event = motor_synth::SynthEvent();
 
     serial.println("setup motors:");
@@ -486,50 +613,107 @@ void test_07_notes_off_update_stack_polyphonic(void)
     motorSynth.printStack();
     printEventPerMotor(&motorSynth, &serial);
 
+    int note_index, motor_index;
     // When remove top of the stack
-    set_note_off(getStackEvent(&motorSynth, 0)->getNote(), &event);
+    note_index = number_of_notes -1;
+    set_note_off(unique_notes[note_index], &event);
     motorSynth.processEvent(&event);
 
-    // Then (unison/monophonic implementation: all motors with next in the stack note speed)
+    // Then 
     motorSynth.printStack();
     printEventPerMotor(&motorSynth, &serial);
 
-    for (int motor_index = 0; motor_index < number_of_motors; motor_index++)
-    {
-        TEST_ASSERT_EQUAL_INT(
-            motorSynth.getNoteVelocity(unique_notes[number_of_notes - 2]),
-            motors[motor_index]->setSpeed_lastSpeed);
-    }
+    motor_index = 0;
+    note_index = 4;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    motor_index = 1;
+    note_index = 1;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+        
+    motor_index = 2;
+    note_index = 2;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    motor_index = 3;
+    note_index = 3;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
 
-    // When remove next to top of the stack
-    set_note_off(getStackEvent(&motorSynth, 1)->getNote(), &event);
+
+    // When remove top of the stack
+    note_index = number_of_notes -2;
+    set_note_off(unique_notes[note_index], &event);
     motorSynth.processEvent(&event);
 
-    // Then (unison implementation: all motors with same speed)
+    // Then 
     motorSynth.printStack();
     printEventPerMotor(&motorSynth, &serial);
 
-    for (int motor_index = 0; motor_index < number_of_motors; motor_index++)
-    {
-        TEST_ASSERT_EQUAL_INT(
-            motorSynth.getNoteVelocity(unique_notes[number_of_notes - 2]),
-            motors[motor_index]->setSpeed_lastSpeed);
-    }
+    motor_index = 0;
+    note_index = 0;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    motor_index = 1;
+    note_index = 1;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+        
+    motor_index = 2;
+    note_index = 2;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    motor_index = 3;
+    note_index = 3;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
 
-    // When remove next to next to top of the stack
-    set_note_off(getStackEvent(&motorSynth, 2)->getNote(), &event);
+
+    // When remove top of the stack
+    note_index = number_of_notes -3;
+    set_note_off(unique_notes[note_index], &event);
     motorSynth.processEvent(&event);
 
-    // Then (unison implementation: all motors with same speed)
+    // Then 
     motorSynth.printStack();
     printEventPerMotor(&motorSynth, &serial);
 
-    for (int motor_index = 0; motor_index < number_of_motors; motor_index++)
-    {
-        TEST_ASSERT_EQUAL_INT(
-            motorSynth.getNoteVelocity(unique_notes[number_of_notes - 2]),
-            motors[motor_index]->setSpeed_lastSpeed);
-    }
+    motor_index = 0;
+    note_index = 0;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    motor_index = 1;
+    note_index = 1;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+        
+    motor_index = 2;
+    note_index = 2;
+    TEST_ASSERT_EQUAL_INT(
+        motorSynth.getNoteVelocity(unique_notes[note_index]),
+        motors[motor_index]->setSpeed_lastSpeed);
+    
+    motor_index = 3;
+    TEST_ASSERT_EQUAL_INT(
+        0,
+        motors[motor_index]->setSpeed_lastSpeed);
+
 
     // Teardown
     teardown_motors(number_of_motors);

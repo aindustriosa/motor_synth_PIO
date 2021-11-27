@@ -278,7 +278,7 @@ namespace motor_synth
         this->clearNotesWaitingForMotor();
         this->clearIsMotorAvailableForChange();
 
-        // Stage 1; update notesWaitingForMotorIndex and isMotorWellAssigned.
+        // Stage 1; update notesWaitingForMotorIndex and isMotorAvailableForChange.
         int maxAssignableEvents = motors_len; // We can manage as many different notes as motors we have
         for (int i = this->eventsStackIndex; i >= 0; i--)
         {
@@ -308,8 +308,9 @@ namespace motor_synth
             {
                 if (this->isMotorAvailableForChange[i_motor] == true)
                 {
-                    this->applyEventToMotor(this->eventsStack + i_note, i_motor);
+                    this->applyEventToMotor(this->notesWaitingForMotor[i_note], i_motor);
                     this->isMotorAvailableForChange[i_motor] = false;
+                    break;
                 }
             }
         }
