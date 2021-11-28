@@ -153,6 +153,8 @@ namespace motor_synth
 
         void applyEventToMotor(motor_synth::SynthEvent * event, int motor_index);
 
+        void stopMotor(int motor_index);
+
 #define NOTE_TO_VELOCITY_SIZE 128
 #define DRONE_VELOCITY 0 // With 160 the motor spins
 

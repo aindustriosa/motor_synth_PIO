@@ -237,14 +237,19 @@ namespace motor_synth
         }
     }
 
+    void MotorSynth::stopMotor(int motor_index)
+    {
+        this->motors[motor_index]->setSpeed(DRONE_VELOCITY);
+        this->eventPerMotor[motor_index].setType(SynthEventType::InvalidType);
+    }
+
     void MotorSynth::applyStackToMotors()
     {
         if (this->eventsStackIndex < 0) // No notes in the stack
         {
             for (int motor_index = 0; motor_index < this->motors_len; motor_index++)
             {
-                this->motors[motor_index]->setSpeed(DRONE_VELOCITY);
-                this->eventPerMotor[motor_index].setType(SynthEventType::InvalidType);
+                this->stopMotor(motor_index);
             }
         }
         else
@@ -304,14 +309,22 @@ namespace motor_synth
         // Stage 2; apply the notes not played to the avaliable motors
         for (int i_note = this->notesWaitingForMotorIndex; i_note >= 0; i_note--)
         {
-            for (int i_motor = 0; i_motor < this->motors_len; i_motor++)
+            for (int motor_index = 0; motor_index < this->motors_len; motor_index++)
             {
-                if (this->isMotorAvailableForChange[i_motor] == true)
+                if (this->isMotorAvailableForChange[motor_index] == true)
                 {
-                    this->applyEventToMotor(this->notesWaitingForMotor[i_note], i_motor);
-                    this->isMotorAvailableForChange[i_motor] = false;
+                    this->applyEventToMotor(this->notesWaitingForMotor[i_note], motor_index);
+                    this->isMotorAvailableForChange[motor_index] = false;
                     break;
                 }
+            }
+        }
+        // Stage 3; Make sure that motors that are available at this point are stopped
+        for (int motor_index = 0; motor_index < this->motors_len; motor_index++)
+        {
+            if (this->isMotorAvailableForChange[motor_index] == true)
+            {
+                this->stopMotor(motor_index);
             }
         }
     }
