@@ -37,8 +37,9 @@ void setup()
     motors[i] = motor;
     motors[i]->setup(motor_control_pins[i]);
   }
+  delay(5000);
   motorSynth.setup((motor_synth::MotorController**)motors, NUMBER_OF_MOTORS, &serial);
-  motorSynth.setIsMonophonic(true);
+  motorSynth.setIsMonophonic(false);
   global_cli.setup(&blink, &synthEEPROM, &midiInterface, &serial, &motorSynth);
 }
 

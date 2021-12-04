@@ -1,4 +1,4 @@
-#!env bash
+#!/bin/bash
 # contains functions for sending MIDI events
 
 TEENSY_PORT=$(amidi -l | grep "Teensy MIDI" -m 1 | awk '{print $2}')
@@ -167,10 +167,33 @@ function send_midi {
     amidi -p ${TEENSY_PORT} -S $1
 }
 
+# Send a noteOn
+# USAGE: noteOn $NOTE_HEX_CODE
+function noteOn {
+    send_midi "$NoteOn $1 64"
+}
+
+# Send a noteOff
+# USAGE: noteOff $NOTE_HEX_CODE
+function noteOff {
+    send_midi "$NoteOff $1 64"
+}
+
+# Send a noteOn, wait a second, send a noteOff for a given note
+# USAGE: noteOnOff_sec $NOTE_HEX_CODE $SECONDS
+function noteOnOff_sec {
+    send_midi "$NoteOn $1 64"
+    sleep $2
+    send_midi "$NoteOff $1 64"
+}
+
 # Send a noteOn, wait a second, send a noteOff for a given note
 # USAGE: noteOnOff_1_sec $NOTE_HEX_CODE
 function noteOnOff_1_sec {
-    send_midi "$NoteOn $1 64" 
-    sleep 1
-    send_midi "$NoteOff $1 64"
+    noteOnOff_sec "$1 $2"
+}
+
+
+function terminal_beep {
+    echo -ne '\a'
 }

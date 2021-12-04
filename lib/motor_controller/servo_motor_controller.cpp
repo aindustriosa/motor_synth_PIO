@@ -4,10 +4,10 @@
 namespace motor_synth
 {
 
+// remember to delay(5000) before start using the motors
 void ServoMotorController::setup(int control_pin){
   servo.attach(control_pin, servoMinValue, servoMaxValue);
   servo.write(0);
-  delay(5000);
 }
 
 void ServoMotorController::setSpeed(int speed){
