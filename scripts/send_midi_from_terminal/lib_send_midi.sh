@@ -160,40 +160,159 @@ A0=21
 NoteOn=90
 NoteOff=80
 
+lib_send_midi_help_texts=("# # # Available functions in lib_send_midi # # #")
 
-# Send a MIDI event
-# USAGE: send_midi "$MIDI_EVENT_TYPE $MIDI_DATA_1 $MIDI_DATA_2"
-function send_midi {
+
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_send_midi\e[0m \$MIDI_EVENT_TYPE \$MIDI_DATA_1 \$MIDI_DATA_2:
+        Send a MIDI event."
+)
+function lib_send_midi_send_midi {
     amidi -p ${TEENSY_PORT} -S $1
 }
 
-# Send a noteOn
-# USAGE: noteOn $NOTE_HEX_CODE
-function noteOn {
-    send_midi "$NoteOn $1 64"
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_noteOn\e[0m \$NOTE_HEX_CODE: Send a MIDI noteOn event."
+)
+function lib_send_midi_noteOn {
+    lib_send_midi_send_midi "$NoteOn $1 64"
 }
 
-# Send a noteOff
-# USAGE: noteOff $NOTE_HEX_CODE
-function noteOff {
-    send_midi "$NoteOff $1 64"
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_noteOff\e[0m \$NOTE_HEX_CODE: Send a MIDI noteOff event."
+)
+function lib_send_midi_noteOff {
+    lib_send_midi_send_midi "$NoteOff $1 64"
 }
 
-# Send a noteOn, wait a second, send a noteOff for a given note
-# USAGE: noteOnOff_sec $NOTE_HEX_CODE $SECONDS
-function noteOnOff_sec {
-    send_midi "$NoteOn $1 64"
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_noteOnOff_sec\e[0m \$NOTE_HEX_CODE \$SECONDS: Send a MIDI noteOn,
+        wait a number of seconds, send a noteOff for a given note."
+)
+function lib_send_midi_noteOnOff_sec {
+    lib_send_midi_send_midi "$NoteOn $1 64"
     sleep $2
-    send_midi "$NoteOff $1 64"
+    lib_send_midi_send_midi "$NoteOff $1 64"
 }
 
-# Send a noteOn, wait a second, send a noteOff for a given note
-# USAGE: noteOnOff_1_sec $NOTE_HEX_CODE
-function noteOnOff_1_sec {
-    noteOnOff_sec "$1 $2"
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_noteOnOff_1_sec\e[0m \$NOTE_HEX_CODE: Send a MIDI noteOn,
+        wait a second, send a noteOff for a given note."
+)
+function lib_send_midi_noteOnOff_1_sec {
+    lib_send_midi_noteOnOff_sec "$1 $2"
 }
 
-
-function terminal_beep {
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_terminal_beep\e[0m: Send a terminal beep."
+)
+function lib_send_midi_terminal_beep {
     echo -ne '\a'
 }
+
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_play_scale_4\e[0m: Play the 4th scale."
+)
+function lib_send_midi_play_scale_4 {
+    for note in $C4 $D4 $E4 $F4 $G4 $A4 $B4
+    do
+        lib_send_midi_noteOnOff_sec $note 2
+        lib_send_midi_terminal_beep
+    done
+}
+
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_play_scale_5\e[0m: Play the 5th scale."
+)
+function lib_send_midi_play_scale_5 {
+    for note in $C5 $D5 $E5 $F5 $G5 $A5 $B5
+    do
+        lib_send_midi_noteOnOff_sec $note 2
+        lib_send_midi_terminal_beep
+    done
+}
+
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_activate_1_motor\e[0m: Send noteOn with a very low note so
+        motor 1 keeps running."
+)
+function lib_send_midi_activate_1_motor {
+    lib_send_midi_noteOn 2
+}
+
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_deactivate_1_motor\e[0m: Undo lib_send_midi_activate_1_motor."
+)
+function lib_send_midi_deactivate_1_motor {
+    lib_send_midi_noteOff 2
+}
+
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_activate_2_motor\e[0m: Send two noteOn with very low notes so
+        motor 1 and 2 keep running."
+)
+function lib_send_midi_activate_2_motor {
+    lib_send_midi_activate_1_motor
+    lib_send_midi_noteOn 3
+}
+
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_deactivate_2_motor\e[0m: Undo lib_send_midi_activate_2_motor."
+)
+function lib_send_midi_deactivate_2_motor {
+    lib_send_midi_deactivate_1_motor
+    lib_send_midi_noteOff 3
+}
+
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_activate_3_motor\e[0m: Send three noteOn with very low notes so
+        motor 1, 2 and 3 keep running."
+)
+function lib_send_midi_activate_3_motor {
+    lib_send_midi_activate_2_motor
+    lib_send_midi_noteOn 4
+}
+
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_deactivate_3_motor\e[0m: Undo lib_send_midi_activate_3_motor."
+)
+function lib_send_midi_deactivate_3_motor {
+    lib_send_midi_deactivate_2_motor
+    lib_send_midi_noteOff 4
+}
+
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_activate_3_motor\e[0m: Send four noteOn with very low notes so
+        motor 1, 2, 3 and 4 keep running."
+)
+function lib_send_midi_activate_4_motor {
+    lib_send_midi_activate_3_motor
+    lib_send_midi_noteOn 5
+}
+
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_deactivate_4_motor\e[0m: Undo lib_send_midi_activate_4_motor."
+)
+function lib_send_midi_deactivate_4_motor {
+    lib_send_midi_deactivate_3_motor
+    lib_send_midi_noteOff 5
+}
+
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_remove_all_midi_connections\e[0m: Remove all midi patches 
+        (that where made by autoaconnect, for example)."
+)
+function lib_send_midi_remove_all_midi_connections {
+    aconnect --removeall
+}
+
+lib_send_midi_help_texts+=(
+"\e[31mlib_send_midi_print_help\e[0m: Print this help."
+)
+function lib_send_midi_print_help {
+    for line in "${lib_send_midi_help_texts[@]}"
+    do
+        echo -e "${line}"
+    done
+}
+
